@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ucapan &amp; Survei Kepuasan Pasien — RSU Allam Medica</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{
+    --ink:#1c2a24;
+    --paper:#f6f4ee;
+    --panel:#ffffff;
+    --line:#dcd6c6;
+    --teal:#2d5a4f;
+    --teal-dark:#1e3d35;
+    --clay:#b5643f;
+    --ok:#2d5a4f;
+    --warn:#b5643f;
+    --pending:#8a7f5c;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--paper); color:var(--ink); min-height:100vh;
+  }
+  .topbar{
+    background:var(--teal-dark); color:#f6f4ee; padding:18px 24px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+  .topbar h1{font-size:17px; margin:0; font-weight:600; letter-spacing:.2px;}
+  .topbar .sub{font-size:12px; opacity:.7; margin-top:2px;}
+  .wrap{max-width:760px; margin:0 auto; padding:20px 16px 60px;}
+
+  /* LOGIN */
+  #loginView{max-width:340px; margin:80px auto; padding:0 16px;}
+  #loginView .card{padding:28px 24px;}
+  #loginView h2{margin:0 0 4px; font-size:18px;}
+  #loginView p{color:#6b6355; font-size:13px; margin:0 0 20px;}
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; margin-bottom:16px;
+  }
+  .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#6b6355;}
+
+  input, select, textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px;
+    font-size:14px; font-family:inherit; background:#fff; color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  label{font-size:12px; color:#6b6355; display:block; margin-bottom:4px; margin-top:10px;}
+  label:first-child{margin-top:0;}
+  textarea{min-height:90px; font-family:ui-monospace,monospace; font-size:13px; line-height:1.5;}
+
+  button{
+    background:var(--teal); color:#fff; border:none; border-radius:7px;
+    padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer;
+    font-family:inherit;
+  }
+  button:hover{background:var(--teal-dark);}
+  button:disabled{background:#a8a49a; cursor:not-allowed;}
+  button.secondary{background:transparent; color:var(--teal); border:1px solid var(--teal);}
+  button.secondary:hover{background:#eef2f0;}
+  button.ghost{background:transparent; color:var(--clay); border:1px solid var(--clay); padding:6px 10px; font-size:12px; font-weight:500;}
+
+  .row{display:flex; gap:10px; flex-wrap:wrap;}
+  .row > *{flex:1; min-width:140px;}
+
+  .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line);}
+  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#8a8574; border-bottom:2px solid transparent;}
+  .tab.active{color:var(--teal-dark); border-bottom-color:var(--teal);}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center;}
+  .stat .num{font-size:22px; font-weight:700; color:var(--teal-dark);}
+  .stat .lbl{font-size:11px; color:#8a8574; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; color:#8a8574; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:8px; border-bottom:1px solid #eeeae0; vertical-align:top;}
+  .badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600;}
+  .badge.Terkirim{background:#e3ede9; color:var(--ok);}
+  .badge.Gagal{background:#f3e2da; color:var(--warn);}
+  .badge.Pending{background:#f1eee0; color:var(--pending);}
+
+  .msg{font-size:13px; padding:10px 12px; border-radius:7px; margin-bottom:12px; display:none;}
+  .msg.show{display:block;}
+  .msg.ok{background:#e3ede9; color:var(--teal-dark);}
+  .msg.err{background:#f3e2da; color:#8a3a1f;}
+
+  .hint{font-size:12px; color:#8a8574; margin-top:6px; line-height:1.5;}
+  .empty{text-align:center; padding:30px 10px; color:#8a8574; font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <h2>Ucapan &amp; Survei Pasien</h2>
+    <p>RSU Allam Medica — masukkan PIN admin</p>
+    <label>PIN</label>
+    <input type="password" id="pinInput" inputmode="numeric" placeholder="••••">
+    <div class="msg err" id="loginMsg"></div>
+    <button style="width:100%; margin-top:14px;" onclick="login()">Masuk</button>
+  </div>
+</div>
+
+<div id="mainView" style="display:none;">
+  <div class="topbar">
+    <div>
+      <h1>Ucapan &amp; Survei Kepuasan Pasien</h1>
+      <div class="sub">RSU Allam Medica</div>
+    </div>
+    <button class="secondary" style="color:#f6f4ee; border-color:#f6f4ee;" onclick="logout()">Keluar</button>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
+      <div class="stat"><div class="num" id="statTerkirim">–</div><div class="lbl">Terkirim</div></div>
+      <div class="stat"><div class="num" id="statPending">–</div><div class="lbl">Pending</div></div>
+      <div class="stat"><div class="num" id="statGagal">–</div><div class="lbl">Gagal</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="scan" onclick="switchTab('scan')">Scan Pasien</div>
+      <div class="tab" data-tab="tambah" onclick="switchTab('tambah')">Tambah Manual</div>
+      <div class="tab" data-tab="antrian" onclick="switchTab('antrian')">Antrian Kirim</div>
+      <div class="tab" data-tab="master" onclick="switchTab('master')">Data Master</div>
+    </div>
+
+    <div id="tab-scan">
+      <div class="card">
+        <h3>Scan Barcode Pasien</h3>
+        <label>No. Rekam Medis (scan dengan scanner USB, atau ketik manual lalu Enter)</label>
+        <input type="text" id="scanInput" placeholder="Arahkan scanner ke sini lalu scan..." autocomplete="off">
+        <div class="row" style="margin-top:10px;">
+          <button class="secondary" style="width:100%;" onclick="bukaKamera()">Scan dengan Kamera HP</button>
+        </div>
+        <div id="cameraBox" style="display:none; margin-top:12px;">
+          <div id="qr-reader" style="width:100%; border-radius:8px; overflow:hidden;"></div>
+          <button class="ghost" style="width:100%; margin-top:8px;" onclick="tutupKamera()">Tutup Kamera</button>
+        </div>
+        <div class="msg" id="scanMsg"></div>
+      </div>
+
+      <div class="card" id="hasilScanCard" style="display:none;">
+        <h3>Konfirmasi Data Pasien</h3>
+        <label>No. RM</label>
+        <input type="text" id="scanNoRM" readonly>
+        <label>Nama</label>
+        <input type="text" id="scanNama">
+        <label>No. HP</label>
+        <input type="text" id="scanNoHP" placeholder="Isi manual jika belum ada di data master">
+        <div class="row">
+          <div>
+            <label>Ruangan</label>
+            <input type="text" id="scanRuangan" placeholder="mis. Melati">
+          </div>
+          <div>
+            <label>Jenis Ucapan</label>
+            <select id="scanJenis">
+              <option value="Umum">Umum / Pulang Rawat</option>
+              <option value="Ultah">Ulang Tahun</option>
+              <option value="HariBesar">Hari Besar</option>
+            </select>
+          </div>
+        </div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahDariScan()">Tambah ke Antrian</button>
+      </div>
+    </div>
+
+    <div id="tab-master" style="display:none;">
+      <div class="card">
+        <h3>Tambah / Update Data Master (No. RM → Nama, No. HP)</h3>
+        <p class="hint" style="margin-top:0;">Isi data ini sekali di awal (atau saat ada pasien baru) supaya scan barcode langsung mengenali nama & no. HP pasien.</p>
+        <label>Format per baris: No.RM, Nama, No.HP</label>
+        <textarea id="masterBulkInput" placeholder="000123, Budi Santoso, 081234567890
+000124, Siti Aminah, 081298765432"></textarea>
+        <div class="hint">No. RM yang sudah ada akan diperbarui, yang baru akan ditambahkan.</div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahMaster()">Simpan ke Data Master</button>
+        <div class="msg" id="masterMsg"></div>
+      </div>
+    </div>
+
+    <div id="tab-tambah" style="display:none;">
+      <div class="card">
+        <h3>Tambah Satu Pasien</h3>
+        <label>Nama Pasien</label>
+        <input type="text" id="namaInput" placeholder="Nama lengkap">
+        <div class="row">
+          <div>
+            <label>No. HP</label>
+            <input type="text" id="hpInput" placeholder="08xxxxxxxxxx">
+          </div>
+          <div>
+            <label>Tanggal Pulang</label>
+            <input type="date" id="tglInput">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Ruangan</label>
+            <input type="text" id="ruanganInput" placeholder="mis. Melati">
+          </div>
+          <div>
+            <label>Jenis Ucapan</label>
+            <select id="jenisInput">
+              <option value="Umum">Umum / Pulang Rawat</option>
+              <option value="Ultah">Ulang Tahun</option>
+              <option value="HariBesar">Hari Besar</option>
+            </select>
+          </div>
+        </div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahSatu()">Tambah ke Antrian</button>
+      </div>
+
+      <div class="card">
+        <h3>Tambah Massal (Tempel dari Excel)</h3>
+        <label>Format per baris: Nama, No.HP, Tanggal Pulang (opsional), Ruangan (opsional)</label>
+        <textarea id="bulkInput" placeholder="Budi Santoso, 081234567890, 2026-08-20, Melati
+Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
+        <div class="hint">Pisahkan tiap kolom dengan koma. Satu pasien per baris.</div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahMassal()">Tambah Semua ke Antrian</button>
+      </div>
+      <div class="msg" id="tambahMsg"></div>
+    </div>
+
+    <div id="tab-antrian" style="display:none;">
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <button onclick="kirimSekarang()" id="btnKirim">Proses &amp; Kirim Sekarang</button>
+          <button class="secondary" onclick="refreshData()">Muat Ulang</button>
+        </div>
+        <div class="hint">Pengiriman diproses bertahap (maks 15 pesan per proses, jeda antar pesan) agar nomor WA tidak terblokir. Sisa antrian akan dikirim otomatis oleh trigger terjadwal, atau tekan tombol ini lagi.</div>
+        <div class="msg" id="kirimMsg"></div>
+      </div>
+      <div class="card" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table id="antrianTable">
+            <thead><tr><th>Nama</th><th>No. HP</th><th>Jenis</th><th>Status</th><th></th></tr></thead>
+            <tbody id="antrianBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="emptyState" style="display:none;">Belum ada pasien di antrian.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // GANTI dengan URL Web App hasil deploy Apps Script Anda
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwSWsFhNkqZMbCW3XcT9kA_M4JFJCpWUv5DVqtWA5JbOHzvJHYwAGsKItHK7aPynimYug/exec';
+
+  let PIN = '';
+
+  function showMsg(id, text, ok){
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg show ' + (ok ? 'ok' : 'err');
+    setTimeout(()=>{ el.className = 'msg'; }, 4000);
+  }
+
+  async function login(){
+    const pin = document.getElementById('pinInput').value.trim();
+    if(!pin){ return; }
+    try{
+      const res = await fetch(API_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'login', pin })
+      });
+      const data = await res.json();
+      if(data.success){
+        PIN = pin;
+        sessionStorage.setItem('ucapan_pin', pin);
+        document.getElementById('loginView').style.display = 'none';
+        document.getElementById('mainView').style.display = 'block';
+        refreshData();
+      } else {
+        showMsg('loginMsg', 'PIN salah.', false);
+      }
+    } catch(err){
+      showMsg('loginMsg', 'Gagal terhubung ke server. Cek URL API di kode.', false);
+    }
+  }
+
+  function logout(){
+    sessionStorage.removeItem('ucapan_pin');
+    location.reload();
+  }
+
+  function switchTab(name){
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.getElementById('tab-scan').style.display = name === 'scan' ? 'block' : 'none';
+    document.getElementById('tab-tambah').style.display = name === 'tambah' ? 'block' : 'none';
+    document.getElementById('tab-antrian').style.display = name === 'antrian' ? 'block' : 'none';
+    document.getElementById('tab-master').style.display = name === 'master' ? 'block' : 'none';
+    if(name !== 'scan') tutupKamera();
+    if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
+  }
+
+  // ===== SCAN BARCODE =====
+  let html5QrCode = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const scanInput = document.getElementById('scanInput');
+    scanInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        prosesScan(scanInput.value.trim());
+      }
+    });
+  });
+
+  async function prosesScan(noRM){
+    if(!noRM) return;
+    showMsg('scanMsg', 'Mencari data pasien...', true);
+    try{
+      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
+      const data = await res.json();
+      document.getElementById('hasilScanCard').style.display = 'block';
+      document.getElementById('scanNoRM').value = noRM;
+      if(data.found){
+        document.getElementById('scanNama').value = data.nama;
+        document.getElementById('scanNoHP').value = data.noHp;
+        showMsg('scanMsg', 'Pasien ditemukan di data master.', true);
+      } else {
+        document.getElementById('scanNama').value = '';
+        document.getElementById('scanNoHP').value = '';
+        showMsg('scanMsg', 'No. RM belum ada di data master. Isi nama & no. HP manual, akan tersimpan otomatis.', false);
+      }
+      document.getElementById('scanInput').value = '';
+      document.getElementById('scanNama').focus();
+    } catch(err){
+      showMsg('scanMsg', 'Gagal mencari data. Cek koneksi.', false);
+    }
+  }
+
+  async function tambahDariScan(){
+    const noRM = document.getElementById('scanNoRM').value.trim();
+    const nama = document.getElementById('scanNama').value.trim();
+    const noHp = document.getElementById('scanNoHP').value.trim();
+    if(!nama || !noHp){ showMsg('scanMsg', 'Nama dan No. HP wajib diisi.', false); return; }
+
+    // simpan/update ke data master supaya scan berikutnya otomatis kenal
+    await fetch(API_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList: [{ noRM, nama, noHp }] })
+    });
+
+    await kirimTambah([{
+      nama, noHp,
+      tanggalPulang: new Date().toISOString().slice(0,10),
+      ruangan: document.getElementById('scanRuangan').value.trim(),
+      jenisUcapan: document.getElementById('scanJenis').value
+    }]);
+
+    document.getElementById('hasilScanCard').style.display = 'none';
+    document.getElementById('scanRuangan').value = '';
+    showMsg('scanMsg', 'Pasien ditambahkan ke antrian ucapan.', true);
+    document.getElementById('scanInput').focus();
+  }
+
+  function bukaKamera(){
+    document.getElementById('cameraBox').style.display = 'block';
+    html5QrCode = new Html5Qrcode('qr-reader');
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 220 },
+      (decodedText) => {
+        prosesScan(decodedText);
+        tutupKamera();
+      },
+      () => {}
+    ).catch(() => {
+      showMsg('scanMsg', 'Tidak bisa mengakses kamera. Cek izin kamera di browser.', false);
+    });
+  }
+
+  function tutupKamera(){
+    if(html5QrCode){
+      html5QrCode.stop().catch(()=>{});
+      html5QrCode = null;
+    }
+    document.getElementById('cameraBox').style.display = 'none';
+  }
+
+  // ===== DATA MASTER =====
+  async function tambahMaster(){
+    const raw = document.getElementById('masterBulkInput').value.trim();
+    if(!raw) return;
+    const lines = raw.split('\n').filter(l => l.trim());
+    const masterList = lines.map(line => {
+      const parts = line.split(',').map(p => p.trim());
+      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '' };
+    }).filter(p => p.noRM && p.nama);
+
+    if(masterList.length === 0){ showMsg('masterMsg', 'Tidak ada baris valid.', false); return; }
+    try{
+      const res = await fetch(API_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList })
+      });
+      const data = await res.json();
+      showMsg('masterMsg', `${data.added} ditambahkan, ${data.updated} diperbarui.`, true);
+      document.getElementById('masterBulkInput').value = '';
+    } catch(err){
+      showMsg('masterMsg', 'Gagal menyimpan data master.', false);
+    }
+  }
+
+  async function tambahSatu(){
+    const nama = document.getElementById('namaInput').value.trim();
+    const noHp = document.getElementById('hpInput').value.trim();
+    if(!nama || !noHp){ showMsg('tambahMsg', 'Nama dan No. HP wajib diisi.', false); return; }
+    const pasien = [{
+      nama, noHp,
+      tanggalPulang: document.getElementById('tglInput').value,
+      ruangan: document.getElementById('ruanganInput').value.trim(),
+      jenisUcapan: document.getElementById('jenisInput').value
+    }];
+    await kirimTambah(pasien);
+    document.getElementById('namaInput').value = '';
+    document.getElementById('hpInput').value = '';
+    document.getElementById('ruanganInput').value = '';
+  }
+
+  async function tambahMassal(){
+    const raw = document.getElementById('bulkInput').value.trim();
+    if(!raw){ return; }
+    const lines = raw.split('\n').filter(l => l.trim());
+    const pasienList = lines.map(line => {
+      const parts = line.split(',').map(p => p.trim());
+      return { nama: parts[0] || '', noHp: parts[1] || '', tanggalPulang: parts[2] || '', ruangan: parts[3] || '', jenisUcapan: 'Umum' };
+    }).filter(p => p.nama && p.noHp);
+
+    if(pasienList.length === 0){ showMsg('tambahMsg', 'Tidak ada baris valid ditemukan.', false); return; }
+    await kirimTambah(pasienList);
+    document.getElementById('bulkInput').value = '';
+  }
+
+  async function kirimTambah(pasienList){
+    try{
+      const res = await fetch(API_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'addPasien', pin: PIN, pasienList })
+      });
+      const data = await res.json();
+      showMsg('tambahMsg', `${data.added} pasien ditambahkan ke antrian.`, true);
+      refreshData();
+    } catch(err){
+      showMsg('tambahMsg', 'Gagal menambahkan. Coba lagi.', false);
+    }
+  }
+
+  async function kirimSekarang(){
+    const btn = document.getElementById('btnKirim');
+    btn.disabled = true; btn.textContent = 'Mengirim...';
+    try{
+      const res = await fetch(API_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'kirimSekarang', pin: PIN })
+      });
+      const data = await res.json();
+      showMsg('kirimMsg', `Terkirim: ${data.sentCount}, Gagal: ${data.failCount}. (Proses berikutnya kirim sisa antrian)`, true);
+      refreshData();
+    } catch(err){
+      showMsg('kirimMsg', 'Gagal memproses pengiriman.', false);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Proses & Kirim Sekarang';
+    }
+  }
+
+  async function refreshData(){
+    try{
+      const [antrianRes, statsRes] = await Promise.all([
+        fetch(`${API_URL}?action=getAntrian`),
+        fetch(`${API_URL}?action=getStats`)
+      ]);
+      const antrian = await antrianRes.json();
+      const stats = await statsRes.json();
+
+      document.getElementById('statTotal').textContent = stats.total;
+      document.getElementById('statTerkirim').textContent = stats.terkirim;
+      document.getElementById('statPending').textContent = stats.pending;
+      document.getElementById('statGagal').textContent = stats.gagal;
+
+      const body = document.getElementById('antrianBody');
+      body.innerHTML = '';
+      document.getElementById('emptyState').style.display = antrian.length === 0 ? 'block' : 'none';
+
+      antrian.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(p.nama)}</td>
+          <td>${escapeHtml(p.noHp)}</td>
+          <td>${escapeHtml(p.jenisUcapan)}</td>
+          <td><span class="badge ${p.status}">${p.status}</span></td>
+          <td><button class="ghost" onclick="hapusPasien('${p.id}')">Hapus</button></td>
+        `;
+        body.appendChild(tr);
+      });
+    } catch(err){
+      console.error(err);
+    }
+  }
+
+  async function hapusPasien(id){
+    if(!confirm('Hapus pasien ini dari antrian?')) return;
+    await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'hapusPasien', pin: PIN, id }) });
+    refreshData();
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // Auto-login jika PIN tersimpan di sesi ini
+  window.onload = () => {
+    const saved = sessionStorage.getItem('ucapan_pin');
+    if(saved){
+      document.getElementById('pinInput').value = saved;
+      login();
+    }
+  };
+</script>
+</body>
+</html>
