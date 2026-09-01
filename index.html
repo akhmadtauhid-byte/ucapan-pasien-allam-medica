@@ -128,6 +128,41 @@
       <div class="tab" data-tab="tambah" onclick="switchTab('tambah')">Tambah Manual</div>
       <div class="tab" data-tab="antrian" onclick="switchTab('antrian')">Antrian Kirim</div>
       <div class="tab" data-tab="master" onclick="switchTab('master')">Data Master</div>
+      <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')">Pengaturan</div>
+    </div>
+
+    <div id="tab-pengaturan" style="display:none;">
+      <div class="card">
+        <h3>Link Survei Kepuasan</h3>
+        <label>Link Google Form (disisipkan otomatis ke setiap pesan lewat {linkSurvei})</label>
+        <input type="text" id="linkSurveiInput" placeholder="https://forms.gle/...">
+        <button style="width:100%; margin-top:14px;" onclick="simpanLinkSurvei()">Simpan Link Survei</button>
+        <div class="msg" id="linkSurveiMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Template Ucapan Default</h3>
+        <label>Dipakai untuk jenis ucapan yang belum punya template khusus. Variabel: {nama}, {namaRS}, {linkSurvei}</label>
+        <textarea id="defaultTemplateInput" style="min-height:160px;"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="simpanDefaultTemplate()">Simpan Template Default</button>
+        <div class="msg" id="defaultTemplateMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Template Ucapan per Jenis</h3>
+        <p class="hint" style="margin-top:0;">Buat template khusus untuk jenis ucapan tertentu (mis. Ultah, HariBesar). Kalau jenis pasien cocok dengan salah satu di sini, template ini dipakai menggantikan template default.</p>
+        <div id="templateList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Tambah Jenis Ucapan Baru</h3>
+        <label>Nama Jenis (tanpa spasi, mis. Ultah, HariBesar, Ramadan)</label>
+        <input type="text" id="jenisBaruInput" placeholder="mis. Ultah">
+        <label>Template Pesan</label>
+        <textarea id="templateBaruInput" style="min-height:120px;" placeholder="Yth. Bapak/Ibu {nama}, Selamat ulang tahun dari {namaRS}..."></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="tambahJenisTemplate()">Tambah Jenis Ucapan</button>
+        <div class="msg" id="jenisBaruMsg"></div>
+      </div>
     </div>
 
     <div id="tab-scan">
@@ -251,7 +286,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
 <script>
   // GANTI dengan URL Web App hasil deploy Apps Script Anda
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwSWsFhNkqZMbCW3XcT9kA_M4JFJCpWUv5DVqtWA5JbOHzvJHYwAGsKItHK7aPynimYug/exec';
+  const API_URL = 'ISI_DENGAN_URL_WEB_APP_APPS_SCRIPT';
 
   let PIN = '';
 
@@ -277,6 +312,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         document.getElementById('loginView').style.display = 'none';
         document.getElementById('mainView').style.display = 'block';
         refreshData();
+        refreshJenisOptions();
       } else {
         showMsg('loginMsg', 'PIN salah.', false);
       }
@@ -296,8 +332,10 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     document.getElementById('tab-tambah').style.display = name === 'tambah' ? 'block' : 'none';
     document.getElementById('tab-antrian').style.display = name === 'antrian' ? 'block' : 'none';
     document.getElementById('tab-master').style.display = name === 'master' ? 'block' : 'none';
+    document.getElementById('tab-pengaturan').style.display = name === 'pengaturan' ? 'block' : 'none';
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
+    if(name === 'pengaturan') muatPengaturan();
   }
 
   // ===== SCAN BARCODE =====
@@ -516,6 +554,116 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     const div = document.createElement('div');
     div.textContent = str || '';
     return div.innerHTML;
+  }
+
+  // ===== PENGATURAN =====
+  async function refreshJenisOptions(){
+    try{
+      const res = await fetch(`${API_URL}?action=getSettings`);
+      const data = await res.json();
+      const jenisKustom = (data.templates || []).map(t => t.jenis);
+      ['scanJenis', 'jenisInput'].forEach(selId => {
+        const sel = document.getElementById(selId);
+        const existing = Array.from(sel.options).map(o => o.value);
+        jenisKustom.forEach(j => {
+          if(!existing.includes(j)){
+            const opt = document.createElement('option');
+            opt.value = j; opt.textContent = j;
+            sel.appendChild(opt);
+          }
+        });
+      });
+    } catch(err){ /* diam saja, dropdown tetap pakai opsi default */ }
+  }
+
+  async function muatPengaturan(){
+    try{
+      const res = await fetch(`${API_URL}?action=getSettings`);
+      const data = await res.json();
+      document.getElementById('linkSurveiInput').value = data.linkSurvei || '';
+      document.getElementById('defaultTemplateInput').value = data.defaultTemplate || '';
+
+      const listEl = document.getElementById('templateList');
+      listEl.innerHTML = '';
+      if(!data.templates || data.templates.length === 0){
+        listEl.innerHTML = '<div class="hint">Belum ada template khusus. Tambahkan lewat form di bawah.</div>';
+      } else {
+        data.templates.forEach(t => {
+          const div = document.createElement('div');
+          div.style.marginBottom = '16px';
+          div.style.paddingBottom = '16px';
+          div.style.borderBottom = '1px solid #eeeae0';
+          div.innerHTML = `
+            <label>Jenis: <strong>${escapeHtml(t.jenis)}</strong></label>
+            <textarea style="min-height:110px;" data-jenis="${escapeHtml(t.jenis)}">${escapeHtml(t.template)}</textarea>
+            <div class="row" style="margin-top:8px;">
+              <button class="secondary" onclick="simpanTemplateJenis('${escapeHtml(t.jenis)}', this)">Simpan Perubahan</button>
+              <button class="ghost" onclick="hapusTemplateJenis('${escapeHtml(t.jenis)}')">Hapus Jenis Ini</button>
+            </div>
+          `;
+          listEl.appendChild(div);
+        });
+      }
+    } catch(err){
+      console.error(err);
+    }
+  }
+
+  async function simpanLinkSurvei(){
+    const value = document.getElementById('linkSurveiInput').value.trim();
+    if(!value){ showMsg('linkSurveiMsg', 'Link tidak boleh kosong.', false); return; }
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'LinkSurveiBase', value }) });
+      showMsg('linkSurveiMsg', 'Link survei tersimpan.', true);
+    } catch(err){
+      showMsg('linkSurveiMsg', 'Gagal menyimpan.', false);
+    }
+  }
+
+  async function simpanDefaultTemplate(){
+    const value = document.getElementById('defaultTemplateInput').value.trim();
+    if(!value){ showMsg('defaultTemplateMsg', 'Template tidak boleh kosong.', false); return; }
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'TemplatePesan', value }) });
+      showMsg('defaultTemplateMsg', 'Template default tersimpan.', true);
+    } catch(err){
+      showMsg('defaultTemplateMsg', 'Gagal menyimpan.', false);
+    }
+  }
+
+  async function simpanTemplateJenis(jenis, btnEl){
+    const textarea = document.querySelector(`textarea[data-jenis="${jenis}"]`);
+    const template = textarea.value.trim();
+    btnEl.disabled = true;
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'saveTemplateJenis', pin: PIN, jenis, template }) });
+      btnEl.textContent = 'Tersimpan ✓';
+      setTimeout(()=>{ btnEl.textContent = 'Simpan Perubahan'; btnEl.disabled = false; }, 1500);
+    } catch(err){
+      btnEl.disabled = false;
+    }
+  }
+
+  async function hapusTemplateJenis(jenis){
+    if(!confirm(`Hapus template untuk jenis "${jenis}"? Pasien dengan jenis ini akan memakai template default.`)) return;
+    await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'deleteTemplateJenis', pin: PIN, jenis }) });
+    muatPengaturan();
+  }
+
+  async function tambahJenisTemplate(){
+    const jenis = document.getElementById('jenisBaruInput').value.trim().replace(/\s+/g, '');
+    const template = document.getElementById('templateBaruInput').value.trim();
+    if(!jenis || !template){ showMsg('jenisBaruMsg', 'Nama jenis dan template wajib diisi.', false); return; }
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'saveTemplateJenis', pin: PIN, jenis, template }) });
+      showMsg('jenisBaruMsg', `Jenis ucapan "${jenis}" ditambahkan.`, true);
+      document.getElementById('jenisBaruInput').value = '';
+      document.getElementById('templateBaruInput').value = '';
+      muatPengaturan();
+      refreshJenisOptions();
+    } catch(err){
+      showMsg('jenisBaruMsg', 'Gagal menambahkan.', false);
+    }
   }
 
   // Auto-login jika PIN tersimpan di sesi ini
