@@ -7,75 +7,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
   :root{
-    --ink:#1c2a24;
-    --paper:#f6f4ee;
-    --panel:#ffffff;
-    --line:#dcd6c6;
-    --teal:#2d5a4f;
-    --teal-dark:#1e3d35;
-    --clay:#b5643f;
-    --ok:#2d5a4f;
-    --warn:#b5643f;
-    --pending:#8a7f5c;
-    --radius:10px;
+    --ink:#1c2a24; --paper:#f6f4ee; --panel:#ffffff; --line:#dcd6c6;
+    --teal:#2d5a4f; --teal-dark:#1e3d35; --clay:#b5643f;
+    --ok:#2d5a4f; --warn:#b5643f; --pending:#8a7f5c; --radius:10px;
   }
   *{box-sizing:border-box;}
-  body{
-    margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-    background:var(--paper); color:var(--ink); min-height:100vh;
-  }
-  .topbar{
-    background:var(--teal-dark); color:#f6f4ee; padding:18px 24px;
-    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
-  }
-  .topbar h1{font-size:17px; margin:0; font-weight:600; letter-spacing:.2px;}
+  body{margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
+  .topbar{background:var(--teal-dark); color:#f6f4ee; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  .topbar h1{font-size:17px; margin:0; font-weight:600;}
   .topbar .sub{font-size:12px; opacity:.7; margin-top:2px;}
   .wrap{max-width:760px; margin:0 auto; padding:20px 16px 60px;}
-
-  /* LOGIN */
   #loginView{max-width:340px; margin:80px auto; padding:0 16px;}
   #loginView .card{padding:28px 24px;}
   #loginView h2{margin:0 0 4px; font-size:18px;}
   #loginView p{color:#6b6355; font-size:13px; margin:0 0 20px;}
-
-  .card{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-    padding:18px; margin-bottom:16px;
-  }
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
   .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#6b6355;}
-
-  input, select, textarea{
-    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px;
-    font-size:14px; font-family:inherit; background:#fff; color:var(--ink);
-  }
+  input, select, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; background:#fff; color:var(--ink);}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
   label{font-size:12px; color:#6b6355; display:block; margin-bottom:4px; margin-top:10px;}
   label:first-child{margin-top:0;}
   textarea{min-height:90px; font-family:ui-monospace,monospace; font-size:13px; line-height:1.5;}
-
-  button{
-    background:var(--teal); color:#fff; border:none; border-radius:7px;
-    padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer;
-    font-family:inherit;
-  }
+  button{background:var(--teal); color:#fff; border:none; border-radius:7px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
   button:hover{background:var(--teal-dark);}
   button:disabled{background:#a8a49a; cursor:not-allowed;}
   button.secondary{background:transparent; color:var(--teal); border:1px solid var(--teal);}
   button.secondary:hover{background:#eef2f0;}
   button.ghost{background:transparent; color:var(--clay); border:1px solid var(--clay); padding:6px 10px; font-size:12px; font-weight:500;}
-
   .row{display:flex; gap:10px; flex-wrap:wrap;}
   .row > *{flex:1; min-width:140px;}
-
-  .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line);}
+  .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
   .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#8a8574; border-bottom:2px solid transparent;}
   .tab.active{color:var(--teal-dark); border-bottom-color:var(--teal);}
-
   .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;}
   .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center;}
   .stat .num{font-size:22px; font-weight:700; color:var(--teal-dark);}
   .stat .lbl{font-size:11px; color:#8a8574; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
-
   table{width:100%; border-collapse:collapse; font-size:13px;}
   th{text-align:left; font-size:11px; text-transform:uppercase; color:#8a8574; padding:6px 8px; border-bottom:1px solid var(--line);}
   td{padding:8px; border-bottom:1px solid #eeeae0; vertical-align:top;}
@@ -83,12 +50,10 @@
   .badge.Terkirim{background:#e3ede9; color:var(--ok);}
   .badge.Gagal{background:#f3e2da; color:var(--warn);}
   .badge.Pending{background:#f1eee0; color:var(--pending);}
-
   .msg{font-size:13px; padding:10px 12px; border-radius:7px; margin-bottom:12px; display:none;}
   .msg.show{display:block;}
   .msg.ok{background:#e3ede9; color:var(--teal-dark);}
   .msg.err{background:#f3e2da; color:#8a3a1f;}
-
   .hint{font-size:12px; color:#8a8574; margin-top:6px; line-height:1.5;}
   .empty{text-align:center; padding:30px 10px; color:#8a8574; font-size:13px;}
 </style>
@@ -131,40 +96,6 @@
       <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')">Pengaturan</div>
     </div>
 
-    <div id="tab-pengaturan" style="display:none;">
-      <div class="card">
-        <h3>Link Survei Kepuasan</h3>
-        <label>Link Google Form (disisipkan otomatis ke setiap pesan lewat {linkSurvei})</label>
-        <input type="text" id="linkSurveiInput" placeholder="https://forms.gle/...">
-        <button style="width:100%; margin-top:14px;" onclick="simpanLinkSurvei()">Simpan Link Survei</button>
-        <div class="msg" id="linkSurveiMsg"></div>
-      </div>
-
-      <div class="card">
-        <h3>Template Ucapan Default</h3>
-        <label>Dipakai untuk jenis ucapan yang belum punya template khusus. Variabel: {nama}, {namaRS}, {linkSurvei}</label>
-        <textarea id="defaultTemplateInput" style="min-height:160px;"></textarea>
-        <button style="width:100%; margin-top:14px;" onclick="simpanDefaultTemplate()">Simpan Template Default</button>
-        <div class="msg" id="defaultTemplateMsg"></div>
-      </div>
-
-      <div class="card">
-        <h3>Template Ucapan per Jenis</h3>
-        <p class="hint" style="margin-top:0;">Buat template khusus untuk jenis ucapan tertentu (mis. Ultah, HariBesar). Kalau jenis pasien cocok dengan salah satu di sini, template ini dipakai menggantikan template default.</p>
-        <div id="templateList"></div>
-      </div>
-
-      <div class="card">
-        <h3>Tambah Jenis Ucapan Baru</h3>
-        <label>Nama Jenis (tanpa spasi, mis. Ultah, HariBesar, Ramadan)</label>
-        <input type="text" id="jenisBaruInput" placeholder="mis. Ultah">
-        <label>Template Pesan</label>
-        <textarea id="templateBaruInput" style="min-height:120px;" placeholder="Yth. Bapak/Ibu {nama}, Selamat ulang tahun dari {namaRS}..."></textarea>
-        <button style="width:100%; margin-top:14px;" onclick="tambahJenisTemplate()">Tambah Jenis Ucapan</button>
-        <div class="msg" id="jenisBaruMsg"></div>
-      </div>
-    </div>
-
     <div id="tab-scan">
       <div class="card">
         <h3>Scan Barcode Pasien</h3>
@@ -203,19 +134,6 @@
           </div>
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahDariScan()">Tambah ke Antrian</button>
-      </div>
-    </div>
-
-    <div id="tab-master" style="display:none;">
-      <div class="card">
-        <h3>Tambah / Update Data Master (No. RM → Nama, No. HP)</h3>
-        <p class="hint" style="margin-top:0;">Isi data ini sekali di awal (atau saat ada pasien baru) supaya scan barcode langsung mengenali nama & no. HP pasien.</p>
-        <label>Format per baris: No.RM, Nama, No.HP</label>
-        <textarea id="masterBulkInput" placeholder="000123, Budi Santoso, 081234567890
-000124, Siti Aminah, 081298765432"></textarea>
-        <div class="hint">No. RM yang sudah ada akan diperbarui, yang baru akan ditambahkan.</div>
-        <button style="width:100%; margin-top:14px;" onclick="tambahMaster()">Simpan ke Data Master</button>
-        <div class="msg" id="masterMsg"></div>
       </div>
     </div>
 
@@ -281,12 +199,69 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         <div class="empty" id="emptyState" style="display:none;">Belum ada pasien di antrian.</div>
       </div>
     </div>
+
+    <div id="tab-master" style="display:none;">
+      <div class="card">
+        <h3>Tambah / Update Data Master (No. RM → Nama, No. HP)</h3>
+        <p class="hint" style="margin-top:0;">Isi data ini sekali di awal (atau saat ada pasien baru) supaya scan barcode langsung mengenali nama & no. HP pasien.</p>
+        <label>Format per baris: No.RM, Nama, No.HP</label>
+        <textarea id="masterBulkInput" placeholder="000123, Budi Santoso, 081234567890
+000124, Siti Aminah, 081298765432"></textarea>
+        <div class="hint">No. RM yang sudah ada akan diperbarui, yang baru akan ditambahkan.</div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahMaster()">Simpan ke Data Master</button>
+        <div class="msg" id="masterMsg"></div>
+      </div>
+    </div>
+
+    <div id="tab-pengaturan" style="display:none;">
+      <div class="card">
+        <h3>Nomor WhatsApp Pengirim</h3>
+        <label>Token Fonnte (dari dashboard Fonnte → Device → tombol Token). Ganti di sini kalau Anda pindah ke nomor/device WA lain.</label>
+        <input type="text" id="fonnteTokenInput" placeholder="Token dari dashboard Fonnte">
+        <label>Nomor WA Pengirim (untuk catatan/referensi saja, mis. 6281234567890)</label>
+        <input type="text" id="nomorWAInput" placeholder="62...">
+        <button style="width:100%; margin-top:14px;" onclick="simpanNomorWA()">Simpan Nomor WA Pengirim</button>
+        <div class="msg" id="nomorWAMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Link Survei Kepuasan</h3>
+        <label>Link Google Form (disisipkan otomatis ke setiap pesan lewat {linkSurvei})</label>
+        <input type="text" id="linkSurveiInput" placeholder="https://forms.gle/...">
+        <button style="width:100%; margin-top:14px;" onclick="simpanLinkSurvei()">Simpan Link Survei</button>
+        <div class="msg" id="linkSurveiMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Template Ucapan Default</h3>
+        <label>Dipakai untuk jenis ucapan yang belum punya template khusus. Variabel: {nama}, {namaRS}, {linkSurvei}</label>
+        <textarea id="defaultTemplateInput" style="min-height:160px;"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="simpanDefaultTemplate()">Simpan Template Default</button>
+        <div class="msg" id="defaultTemplateMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Template Ucapan per Jenis</h3>
+        <p class="hint" style="margin-top:0;">Buat template khusus untuk jenis ucapan tertentu (mis. Ultah, HariBesar). Kalau jenis pasien cocok dengan salah satu di sini, template ini dipakai menggantikan template default.</p>
+        <div id="templateList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Tambah Jenis Ucapan Baru</h3>
+        <label>Nama Jenis (tanpa spasi, mis. Ultah, HariBesar, Ramadan)</label>
+        <input type="text" id="jenisBaruInput" placeholder="mis. Ultah">
+        <label>Template Pesan</label>
+        <textarea id="templateBaruInput" style="min-height:120px;" placeholder="Yth. Bapak/Ibu {nama}, Selamat ulang tahun dari {namaRS}..."></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="tambahJenisTemplate()">Tambah Jenis Ucapan</button>
+        <div class="msg" id="jenisBaruMsg"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
   // GANTI dengan URL Web App hasil deploy Apps Script Anda
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwSWsFhNkqZMbCW3XcT9kA_M4JFJCpWUv5DVqtWA5JbOHzvJHYwAGsKItHK7aPynimYug/exec';_SCRIP
+  const API_URL = 'ISI_DENGAN_URL_WEB_APP_APPS_SCRIPT';
 
   let PIN = '';
 
@@ -297,14 +272,17 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     setTimeout(()=>{ el.className = 'msg'; }, 4000);
   }
 
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
   async function login(){
     const pin = document.getElementById('pinInput').value.trim();
     if(!pin){ return; }
     try{
-      const res = await fetch(API_URL, {
-        method:'POST',
-        body: JSON.stringify({ action:'login', pin })
-      });
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'login', pin }) });
       const data = await res.json();
       if(data.success){
         PIN = pin;
@@ -314,7 +292,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         refreshData();
         refreshJenisOptions();
       } else {
-        showMsg('loginMsg', 'PIN salah.', false);
+        showMsg('loginMsg', data.error || 'PIN salah.', false);
       }
     } catch(err){
       showMsg('loginMsg', 'Gagal terhubung ke server. Cek URL API di kode.', false);
@@ -328,124 +306,12 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   function switchTab(name){
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    document.getElementById('tab-scan').style.display = name === 'scan' ? 'block' : 'none';
-    document.getElementById('tab-tambah').style.display = name === 'tambah' ? 'block' : 'none';
-    document.getElementById('tab-antrian').style.display = name === 'antrian' ? 'block' : 'none';
-    document.getElementById('tab-master').style.display = name === 'master' ? 'block' : 'none';
-    document.getElementById('tab-pengaturan').style.display = name === 'pengaturan' ? 'block' : 'none';
+    ['scan','tambah','antrian','master','pengaturan'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
+    });
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
     if(name === 'pengaturan') muatPengaturan();
-  }
-
-  // ===== SCAN BARCODE =====
-  let html5QrCode = null;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const scanInput = document.getElementById('scanInput');
-    scanInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        prosesScan(scanInput.value.trim());
-      }
-    });
-  });
-
-  async function prosesScan(noRM){
-    if(!noRM) return;
-    showMsg('scanMsg', 'Mencari data pasien...', true);
-    try{
-      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
-      const data = await res.json();
-      document.getElementById('hasilScanCard').style.display = 'block';
-      document.getElementById('scanNoRM').value = noRM;
-      if(data.found){
-        document.getElementById('scanNama').value = data.nama;
-        document.getElementById('scanNoHP').value = data.noHp;
-        showMsg('scanMsg', 'Pasien ditemukan di data master.', true);
-      } else {
-        document.getElementById('scanNama').value = '';
-        document.getElementById('scanNoHP').value = '';
-        showMsg('scanMsg', 'No. RM belum ada di data master. Isi nama & no. HP manual, akan tersimpan otomatis.', false);
-      }
-      document.getElementById('scanInput').value = '';
-      document.getElementById('scanNama').focus();
-    } catch(err){
-      showMsg('scanMsg', 'Gagal mencari data. Cek koneksi.', false);
-    }
-  }
-
-  async function tambahDariScan(){
-    const noRM = document.getElementById('scanNoRM').value.trim();
-    const nama = document.getElementById('scanNama').value.trim();
-    const noHp = document.getElementById('scanNoHP').value.trim();
-    if(!nama || !noHp){ showMsg('scanMsg', 'Nama dan No. HP wajib diisi.', false); return; }
-
-    // simpan/update ke data master supaya scan berikutnya otomatis kenal
-    await fetch(API_URL, {
-      method:'POST',
-      body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList: [{ noRM, nama, noHp }] })
-    });
-
-    await kirimTambah([{
-      nama, noHp,
-      tanggalPulang: new Date().toISOString().slice(0,10),
-      ruangan: document.getElementById('scanRuangan').value.trim(),
-      jenisUcapan: document.getElementById('scanJenis').value
-    }]);
-
-    document.getElementById('hasilScanCard').style.display = 'none';
-    document.getElementById('scanRuangan').value = '';
-    showMsg('scanMsg', 'Pasien ditambahkan ke antrian ucapan.', true);
-    document.getElementById('scanInput').focus();
-  }
-
-  function bukaKamera(){
-    document.getElementById('cameraBox').style.display = 'block';
-    html5QrCode = new Html5Qrcode('qr-reader');
-    html5QrCode.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: 220 },
-      (decodedText) => {
-        prosesScan(decodedText);
-        tutupKamera();
-      },
-      () => {}
-    ).catch(() => {
-      showMsg('scanMsg', 'Tidak bisa mengakses kamera. Cek izin kamera di browser.', false);
-    });
-  }
-
-  function tutupKamera(){
-    if(html5QrCode){
-      html5QrCode.stop().catch(()=>{});
-      html5QrCode = null;
-    }
-    document.getElementById('cameraBox').style.display = 'none';
-  }
-
-  // ===== DATA MASTER =====
-  async function tambahMaster(){
-    const raw = document.getElementById('masterBulkInput').value.trim();
-    if(!raw) return;
-    const lines = raw.split('\n').filter(l => l.trim());
-    const masterList = lines.map(line => {
-      const parts = line.split(',').map(p => p.trim());
-      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '' };
-    }).filter(p => p.noRM && p.nama);
-
-    if(masterList.length === 0){ showMsg('masterMsg', 'Tidak ada baris valid.', false); return; }
-    try{
-      const res = await fetch(API_URL, {
-        method:'POST',
-        body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList })
-      });
-      const data = await res.json();
-      showMsg('masterMsg', `${data.added} ditambahkan, ${data.updated} diperbarui.`, true);
-      document.getElementById('masterBulkInput').value = '';
-    } catch(err){
-      showMsg('masterMsg', 'Gagal menyimpan data master.', false);
-    }
   }
 
   async function tambahSatu(){
@@ -480,10 +346,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   async function kirimTambah(pasienList){
     try{
-      const res = await fetch(API_URL, {
-        method:'POST',
-        body: JSON.stringify({ action:'addPasien', pin: PIN, pasienList })
-      });
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addPasien', pin: PIN, pasienList }) });
       const data = await res.json();
       showMsg('tambahMsg', `${data.added} pasien ditambahkan ke antrian.`, true);
       refreshData();
@@ -496,10 +359,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     const btn = document.getElementById('btnKirim');
     btn.disabled = true; btn.textContent = 'Mengirim...';
     try{
-      const res = await fetch(API_URL, {
-        method:'POST',
-        body: JSON.stringify({ action:'kirimSekarang', pin: PIN })
-      });
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'kirimSekarang', pin: PIN }) });
       const data = await res.json();
       showMsg('kirimMsg', `Terkirim: ${data.sentCount}, Gagal: ${data.failCount}. (Proses berikutnya kirim sisa antrian)`, true);
       refreshData();
@@ -550,10 +410,101 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     refreshData();
   }
 
-  function escapeHtml(str){
-    const div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
+  // ===== SCAN BARCODE =====
+  let html5QrCode = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const scanInput = document.getElementById('scanInput');
+    scanInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        prosesScan(scanInput.value.trim());
+      }
+    });
+  });
+
+  async function prosesScan(noRM){
+    if(!noRM) return;
+    showMsg('scanMsg', 'Mencari data pasien...', true);
+    try{
+      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
+      const data = await res.json();
+      document.getElementById('hasilScanCard').style.display = 'block';
+      document.getElementById('scanNoRM').value = noRM;
+      if(data.found){
+        document.getElementById('scanNama').value = data.nama;
+        document.getElementById('scanNoHP').value = data.noHp;
+        showMsg('scanMsg', 'Pasien ditemukan di data master.', true);
+      } else {
+        document.getElementById('scanNama').value = '';
+        document.getElementById('scanNoHP').value = '';
+        showMsg('scanMsg', 'No. RM belum ada di data master. Isi nama & no. HP manual, akan tersimpan otomatis.', false);
+      }
+      document.getElementById('scanInput').value = '';
+      document.getElementById('scanNama').focus();
+    } catch(err){
+      showMsg('scanMsg', 'Gagal mencari data. Cek koneksi.', false);
+    }
+  }
+
+  async function tambahDariScan(){
+    const noRM = document.getElementById('scanNoRM').value.trim();
+    const nama = document.getElementById('scanNama').value.trim();
+    const noHp = document.getElementById('scanNoHP').value.trim();
+    if(!nama || !noHp){ showMsg('scanMsg', 'Nama dan No. HP wajib diisi.', false); return; }
+
+    await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList: [{ noRM, nama, noHp }] }) });
+
+    await kirimTambah([{
+      nama, noHp,
+      tanggalPulang: new Date().toISOString().slice(0,10),
+      ruangan: document.getElementById('scanRuangan').value.trim(),
+      jenisUcapan: document.getElementById('scanJenis').value
+    }]);
+
+    document.getElementById('hasilScanCard').style.display = 'none';
+    document.getElementById('scanRuangan').value = '';
+    showMsg('scanMsg', 'Pasien ditambahkan ke antrian ucapan.', true);
+    document.getElementById('scanInput').focus();
+  }
+
+  function bukaKamera(){
+    document.getElementById('cameraBox').style.display = 'block';
+    html5QrCode = new Html5Qrcode('qr-reader');
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 220 },
+      (decodedText) => { prosesScan(decodedText); tutupKamera(); },
+      () => {}
+    ).catch(() => {
+      showMsg('scanMsg', 'Tidak bisa mengakses kamera. Cek izin kamera di browser.', false);
+    });
+  }
+
+  function tutupKamera(){
+    if(html5QrCode){ html5QrCode.stop().catch(()=>{}); html5QrCode = null; }
+    document.getElementById('cameraBox').style.display = 'none';
+  }
+
+  // ===== DATA MASTER =====
+  async function tambahMaster(){
+    const raw = document.getElementById('masterBulkInput').value.trim();
+    if(!raw) return;
+    const lines = raw.split('\n').filter(l => l.trim());
+    const masterList = lines.map(line => {
+      const parts = line.split(',').map(p => p.trim());
+      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '' };
+    }).filter(p => p.noRM && p.nama);
+
+    if(masterList.length === 0){ showMsg('masterMsg', 'Tidak ada baris valid.', false); return; }
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addMasterPasien', pin: PIN, masterList }) });
+      const data = await res.json();
+      showMsg('masterMsg', `${data.added} ditambahkan, ${data.updated} diperbarui.`, true);
+      document.getElementById('masterBulkInput').value = '';
+    } catch(err){
+      showMsg('masterMsg', 'Gagal menyimpan data master.', false);
+    }
   }
 
   // ===== PENGATURAN =====
@@ -573,13 +524,15 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
           }
         });
       });
-    } catch(err){ /* diam saja, dropdown tetap pakai opsi default */ }
+    } catch(err){ /* diam saja */ }
   }
 
   async function muatPengaturan(){
     try{
       const res = await fetch(`${API_URL}?action=getSettings`);
       const data = await res.json();
+      document.getElementById('fonnteTokenInput').value = data.fonnteToken || '';
+      document.getElementById('nomorWAInput').value = data.nomorWAPengirim || '';
       document.getElementById('linkSurveiInput').value = data.linkSurvei || '';
       document.getElementById('defaultTemplateInput').value = data.defaultTemplate || '';
 
@@ -606,6 +559,19 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       }
     } catch(err){
       console.error(err);
+    }
+  }
+
+  async function simpanNomorWA(){
+    const token = document.getElementById('fonnteTokenInput').value.trim();
+    const nomor = document.getElementById('nomorWAInput').value.trim();
+    if(!token){ showMsg('nomorWAMsg', 'Token Fonnte tidak boleh kosong.', false); return; }
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'FonnteToken', value: token }) });
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'NomorWAPengirim', value: nomor }) });
+      showMsg('nomorWAMsg', 'Nomor WA pengirim & token tersimpan.', true);
+    } catch(err){
+      showMsg('nomorWAMsg', 'Gagal menyimpan.', false);
     }
   }
 
@@ -666,7 +632,6 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     }
   }
 
-  // Auto-login jika PIN tersimpan di sesi ini
   window.onload = () => {
     const saved = sessionStorage.getItem('ucapan_pin');
     if(saved){
