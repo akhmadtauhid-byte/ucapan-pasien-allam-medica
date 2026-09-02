@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ucapan &amp; Survei Kepuasan Pasien — RSU Allam Medica</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --ink:#1c2a24; --paper:#f6f4ee; --panel:#ffffff; --line:#dcd6c6;
@@ -93,7 +94,103 @@
       <div class="tab" data-tab="tambah" onclick="switchTab('tambah')">Tambah Manual</div>
       <div class="tab" data-tab="antrian" onclick="switchTab('antrian')">Antrian Kirim</div>
       <div class="tab" data-tab="master" onclick="switchTab('master')">Data Master</div>
+      <div class="tab" data-tab="kontrol" onclick="switchTab('kontrol')">Kontrol Pasien</div>
+      <div class="tab" data-tab="unggah" onclick="switchTab('unggah')">Unggah Berkas (AI)</div>
       <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')">Pengaturan</div>
+    </div>
+
+    <div id="tab-unggah" style="display:none;">
+      <div class="card">
+        <h3>Unggah Berkas dari SIMRS</h3>
+        <p class="hint" style="margin-top:0;">Unggah data pasien dalam bentuk PDF, foto/scan, atau Excel/CSV. AI akan membaca dan menyusunnya otomatis — Anda tinggal cek sebelum ditambahkan ke sistem.</p>
+
+        <label>Data ini untuk keperluan apa?</label>
+        <select id="unggahTarget">
+          <option value="antrian">Antrian Ucapan (pasien pulang rawat)</option>
+          <option value="master">Data Master Pasien (No.RM → Nama/HP)</option>
+          <option value="kontrol">Jadwal Kontrol Pasien</option>
+        </select>
+
+        <label>Pilih Berkas (PDF, JPG/PNG, XLSX, atau CSV)</label>
+        <input type="file" id="unggahFile" accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.csv">
+
+        <button style="width:100%; margin-top:14px;" onclick="prosesUnggahAI()" id="btnUnggahAI">Baca &amp; Ekstrak dengan AI</button>
+        <div class="msg" id="unggahMsg"></div>
+      </div>
+
+      <div class="card" id="previewCard" style="display:none;">
+        <h3>Pratinjau Hasil Ekstraksi</h3>
+        <p class="hint" style="margin-top:0;">Periksa dulu, hilangkan centang pada baris yang salah/tidak perlu sebelum ditambahkan.</p>
+        <div style="overflow-x:auto;">
+          <table id="previewTable">
+            <thead><tr id="previewHead"></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <button style="width:100%; margin-top:14px;" onclick="konfirmasiUnggahAI()" id="btnKonfirmasiUnggah">Tambahkan yang Dicentang</button>
+      </div>
+    </div>
+
+    <div id="tab-kontrol" style="display:none;">
+      <div class="card">
+        <h3>Tambah Jadwal Kontrol</h3>
+        <div class="row">
+          <div>
+            <label>No. RM (opsional)</label>
+            <input type="text" id="kontrolNoRM" placeholder="000123">
+            <div class="hint" style="margin-top:4px;">Ketik No. RM lalu tekan Tab/Enter — kalau pasien pernah di-scan sebelumnya, nama & No. HP otomatis terisi.</div>
+          </div>
+          <div>
+            <label>Nama Pasien</label>
+            <input type="text" id="kontrolNama" placeholder="Nama lengkap">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>No. HP</label>
+            <input type="text" id="kontrolNoHP" placeholder="08xxxxxxxxxx">
+          </div>
+          <div>
+            <label>Tanggal Kontrol</label>
+            <input type="date" id="kontrolTanggal">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Dokter</label>
+            <input type="text" id="kontrolDokter" placeholder="dr. ...">
+          </div>
+          <div>
+            <label>Poli</label>
+            <input type="text" id="kontrolPoli" placeholder="mis. Poli Umum">
+          </div>
+        </div>
+        <button style="width:100%; margin-top:14px;" onclick="tambahKontrolSatu()">Tambah Jadwal</button>
+      </div>
+
+      <div class="card">
+        <h3>Tambah Massal (Tempel dari Excel)</h3>
+        <label>Format per baris: No.RM, Nama, No.HP, Tanggal (YYYY-MM-DD), Dokter, Poli</label>
+        <textarea id="kontrolBulkInput" placeholder="000123, Budi Santoso, 081234567890, 2026-09-10, dr. Andi, Poli Umum"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="tambahKontrolMassal()">Tambah Semua</button>
+        <div class="msg" id="kontrolTambahMsg"></div>
+      </div>
+
+      <div class="card">
+        <button style="width:100%;" onclick="kirimReminderKontrol()" id="btnKirimKontrol">Cek &amp; Kirim Reminder Sekarang</button>
+        <div class="hint">Reminder dikirim otomatis sesuai hari yang diatur di tab Pengaturan (mis. H-3 dan H-1). Bisa juga dipicu manual di sini.</div>
+        <div class="msg" id="kirimKontrolMsg"></div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table id="kontrolTable">
+            <thead><tr><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Reminder</th><th></th></tr></thead>
+            <tbody id="kontrolBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="kontrolEmptyState" style="display:none;">Belum ada jadwal kontrol.</div>
+      </div>
     </div>
 
     <div id="tab-scan">
@@ -134,6 +231,27 @@
           </div>
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahDariScan()">Tambah ke Antrian</button>
+
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eeeae0;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
+            <input type="checkbox" id="kontrolCheckboxScan" onchange="toggleKontrolInline('scan')" style="width:auto;">
+            Pasien ini juga perlu kontrol ulang
+          </label>
+          <div id="kontrolInlineFields-scan" style="display:none; margin-top:10px;">
+            <div class="row">
+              <div>
+                <label>Tanggal Kontrol</label>
+                <input type="date" id="kontrolInlineTanggal-scan">
+              </div>
+              <div>
+                <label>Dokter</label>
+                <input type="text" id="kontrolInlineDokter-scan" placeholder="dr. ...">
+              </div>
+            </div>
+            <label>Poli</label>
+            <input type="text" id="kontrolInlinePoli-scan" placeholder="mis. Poli Umum">
+          </div>
+        </div>
       </div>
     </div>
 
@@ -167,6 +285,27 @@
           </div>
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahSatu()">Tambah ke Antrian</button>
+
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eeeae0;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
+            <input type="checkbox" id="kontrolCheckbox" onchange="toggleKontrolInline('tambah')" style="width:auto;">
+            Pasien ini juga perlu kontrol ulang
+          </label>
+          <div id="kontrolInlineFields-tambah" style="display:none; margin-top:10px;">
+            <div class="row">
+              <div>
+                <label>Tanggal Kontrol</label>
+                <input type="date" id="kontrolInlineTanggal-tambah">
+              </div>
+              <div>
+                <label>Dokter</label>
+                <input type="text" id="kontrolInlineDokter-tambah" placeholder="dr. ...">
+              </div>
+            </div>
+            <label>Poli</label>
+            <input type="text" id="kontrolInlinePoli-tambah" placeholder="mis. Poli Umum">
+          </div>
+        </div>
       </div>
 
       <div class="card">
@@ -255,13 +394,71 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         <button style="width:100%; margin-top:14px;" onclick="tambahJenisTemplate()">Tambah Jenis Ucapan</button>
         <div class="msg" id="jenisBaruMsg"></div>
       </div>
+
+      <div class="card">
+        <h3>Dorong Review Publik (dari Survei)</h3>
+        <p class="hint" style="margin-top:0;">Kalau pasien isi survei dengan rating tinggi, sistem otomatis kirim WA ajakan review Google. Rating rendah dikirim ke admin sebagai peringatan, TIDAK diarahkan ke review publik.</p>
+
+        <label>Link "Tulis Review Google" RS</label>
+        <input type="text" id="linkReviewInput" placeholder="https://g.page/r/.../review">
+
+        <div class="row">
+          <div>
+            <label>Rating Minimal untuk Diajak Review</label>
+            <input type="number" id="ratingMinInput" min="1" max="5" placeholder="4">
+          </div>
+          <div>
+            <label>Nomor WA Admin (notifikasi rating rendah)</label>
+            <input type="text" id="nomorAdminInput" placeholder="628...">
+          </div>
+        </div>
+
+        <label>Nama Sheet Respons Survei (dari Google Form, biasanya "Form Responses 1")</label>
+        <input type="text" id="sheetResponsInput" placeholder="Form Responses 1">
+
+        <label>Template Ajakan Review (rating tinggi). Variabel: {linkReview}</label>
+        <textarea id="templateReviewInput" style="min-height:110px;"></textarea>
+
+        <label>Template Notifikasi Admin (rating rendah). Variabel: {rating}, {noHp}, {komentar}</label>
+        <textarea id="templateAdminInput" style="min-height:110px;"></textarea>
+
+        <button style="width:100%; margin-top:14px;" onclick="simpanPengaturanReview()">Simpan Pengaturan Review</button>
+        <div class="msg" id="reviewSettingMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Proses Respons Survei Baru</h3>
+        <p class="hint" style="margin-top:0;">Cek respons survei yang masuk sejak terakhir diproses, lalu kirim WA ajakan review / notifikasi admin sesuai rating. Bisa dijalankan manual di sini, atau otomatis lewat trigger terjadwal (lihat panduan setup).</p>
+        <button style="width:100%;" onclick="prosesSurveiBaru()" id="btnProsesSurvei">Cek &amp; Proses Respons Survei</button>
+        <div class="msg" id="prosesSurveiMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Reminder Kontrol Pasien</h3>
+        <label>Hari Reminder Sebelum Jadwal (pisahkan koma, mis. "3,1" = H-3 dan H-1)</label>
+        <input type="text" id="hariReminderInput" placeholder="3,1">
+        <label>Template Pesan Reminder. Variabel: {nama}, {namaRS}, {tanggalKontrol}, {dokter}, {poli}, {hariLagi}</label>
+        <textarea id="templateKontrolInput" style="min-height:140px;"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="simpanPengaturanKontrol()">Simpan Pengaturan Reminder Kontrol</button>
+        <div class="msg" id="kontrolSettingMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>AI untuk Baca Berkas (PDF/Gambar/Excel)</h3>
+        <label>Anthropic API Key (untuk fitur Unggah Berkas AI). Dapatkan di console.anthropic.com</label>
+        <input type="password" id="anthropicKeyInput" placeholder="sk-ant-...">
+        <label>Model (biarkan default kalau tidak yakin)</label>
+        <input type="text" id="anthropicModelInput" placeholder="claude-sonnet-4-6">
+        <button style="width:100%; margin-top:14px;" onclick="simpanAnthropicKey()">Simpan API Key</button>
+        <div class="msg" id="anthropicKeyMsg"></div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   // GANTI dengan URL Web App hasil deploy Apps Script Anda
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwSWsFhNkqZMbCW3XcT9kA_M4JFJCpWUv5DVqtWA5JbOHzvJHYwAGsKItHK7aPynimYug/exec';
+  const API_URL = 'ISI_DENGAN_URL_WEB_APP_APPS_SCRIPT';
 
   let PIN = '';
 
@@ -306,12 +503,33 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   function switchTab(name){
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    ['scan','tambah','antrian','master','pengaturan'].forEach(t => {
+    ['scan','tambah','antrian','master','kontrol','unggah','pengaturan'].forEach(t => {
       document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
     });
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
     if(name === 'pengaturan') muatPengaturan();
+    if(name === 'kontrol') refreshKontrolData();
+  }
+
+  function toggleKontrolInline(context){
+    const checkbox = document.getElementById(context === 'scan' ? 'kontrolCheckboxScan' : 'kontrolCheckbox');
+    document.getElementById(`kontrolInlineFields-${context}`).style.display = checkbox.checked ? 'block' : 'none';
+  }
+
+  async function kirimKeKontrolInline(context, noRM, nama, noHp){
+    const tanggal = document.getElementById(`kontrolInlineTanggal-${context}`).value;
+    const dokter = document.getElementById(`kontrolInlineDokter-${context}`).value.trim();
+    const poli = document.getElementById(`kontrolInlinePoli-${context}`).value.trim();
+    if(!tanggal){ return; } // tanggal wajib, kalau kosong lewati diam-diam
+    const jadwalList = [{ noRM: noRM || '', nama, noHp, tanggalKontrol: tanggal, dokter, poli }];
+    await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addJadwalKontrol', pin: PIN, jadwalList }) });
+    // reset field kontrol inline
+    document.getElementById(context === 'scan' ? 'kontrolCheckboxScan' : 'kontrolCheckbox').checked = false;
+    document.getElementById(`kontrolInlineFields-${context}`).style.display = 'none';
+    document.getElementById(`kontrolInlineTanggal-${context}`).value = '';
+    document.getElementById(`kontrolInlineDokter-${context}`).value = '';
+    document.getElementById(`kontrolInlinePoli-${context}`).value = '';
   }
 
   async function tambahSatu(){
@@ -325,6 +543,11 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       jenisUcapan: document.getElementById('jenisInput').value
     }];
     await kirimTambah(pasien);
+
+    if(document.getElementById('kontrolCheckbox').checked){
+      await kirimKeKontrolInline('tambah', '', nama, noHp);
+    }
+
     document.getElementById('namaInput').value = '';
     document.getElementById('hpInput').value = '';
     document.getElementById('ruanganInput').value = '';
@@ -462,6 +685,10 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       jenisUcapan: document.getElementById('scanJenis').value
     }]);
 
+    if(document.getElementById('kontrolCheckboxScan').checked){
+      await kirimKeKontrolInline('scan', noRM, nama, noHp);
+    }
+
     document.getElementById('hasilScanCard').style.display = 'none';
     document.getElementById('scanRuangan').value = '';
     showMsg('scanMsg', 'Pasien ditambahkan ke antrian ucapan.', true);
@@ -535,6 +762,16 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       document.getElementById('nomorWAInput').value = data.nomorWAPengirim || '';
       document.getElementById('linkSurveiInput').value = data.linkSurvei || '';
       document.getElementById('defaultTemplateInput').value = data.defaultTemplate || '';
+      document.getElementById('linkReviewInput').value = data.linkReviewGoogle || '';
+      document.getElementById('ratingMinInput').value = data.ratingMinimalReview || '4';
+      document.getElementById('nomorAdminInput').value = data.nomorAdminNotifikasi || '';
+      document.getElementById('sheetResponsInput').value = data.sheetResponsSurvei || 'Form Responses 1';
+      document.getElementById('templateReviewInput').value = data.templateReviewAjakan || '';
+      document.getElementById('templateAdminInput').value = data.templateNotifikasiAdmin || '';
+      document.getElementById('hariReminderInput').value = data.hariReminderKontrol || '3,1';
+      document.getElementById('templateKontrolInput').value = data.templateReminderKontrol || '';
+      document.getElementById('anthropicKeyInput').value = data.anthropicApiKey || '';
+      document.getElementById('anthropicModelInput').value = data.anthropicModel || 'claude-sonnet-4-6';
 
       const listEl = document.getElementById('templateList');
       listEl.innerHTML = '';
@@ -629,6 +866,309 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       refreshJenisOptions();
     } catch(err){
       showMsg('jenisBaruMsg', 'Gagal menambahkan.', false);
+    }
+  }
+
+  async function simpanPengaturanReview(){
+    const linkReview = document.getElementById('linkReviewInput').value.trim();
+    const ratingMin = document.getElementById('ratingMinInput').value.trim() || '4';
+    const nomorAdmin = document.getElementById('nomorAdminInput').value.trim();
+    const sheetRespons = document.getElementById('sheetResponsInput').value.trim() || 'Form Responses 1';
+    const templateReview = document.getElementById('templateReviewInput').value.trim();
+    const templateAdmin = document.getElementById('templateAdminInput').value.trim();
+
+    if(!linkReview){ showMsg('reviewSettingMsg', 'Link review Google wajib diisi.', false); return; }
+
+    try{
+      const pairs = [
+        ['LinkReviewGoogle', linkReview],
+        ['RatingMinimalReview', ratingMin],
+        ['NomorAdminNotifikasi', nomorAdmin],
+        ['SheetResponsSurvei', sheetRespons],
+        ['TemplateReviewAjakan', templateReview],
+        ['TemplateNotifikasiAdmin', templateAdmin]
+      ];
+      for(const [key, value] of pairs){
+        await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key, value }) });
+      }
+      showMsg('reviewSettingMsg', 'Pengaturan review tersimpan.', true);
+    } catch(err){
+      showMsg('reviewSettingMsg', 'Gagal menyimpan.', false);
+    }
+  }
+
+  async function prosesSurveiBaru(){
+    const btn = document.getElementById('btnProsesSurvei');
+    btn.disabled = true; btn.textContent = 'Memproses...';
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'prosesSurveiBaru', pin: PIN }) });
+      const data = await res.json();
+      if(data.error){
+        showMsg('prosesSurveiMsg', data.error, false);
+      } else {
+        showMsg('prosesSurveiMsg', `Respons baru: ${data.totalBaru}. Ajakan review terkirim: ${data.sentReview}. Notifikasi admin: ${data.sentAdmin}.`, true);
+      }
+    } catch(err){
+      showMsg('prosesSurveiMsg', 'Gagal memproses.', false);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Cek & Proses Respons Survei';
+    }
+  }
+
+  // ===== KONTROL PASIEN =====
+  document.addEventListener('DOMContentLoaded', () => {
+    const noRMInput = document.getElementById('kontrolNoRM');
+    if(noRMInput){
+      noRMInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter'){ e.preventDefault(); lookupNoRMKontrol(); }
+      });
+      noRMInput.addEventListener('blur', lookupNoRMKontrol);
+    }
+  });
+
+  async function lookupNoRMKontrol(){
+    const noRM = document.getElementById('kontrolNoRM').value.trim();
+    if(!noRM) return;
+    try{
+      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
+      const data = await res.json();
+      if(data.found){
+        document.getElementById('kontrolNama').value = data.nama;
+        document.getElementById('kontrolNoHP').value = data.noHp;
+      }
+    } catch(err){ /* diam saja kalau gagal, admin bisa isi manual */ }
+  }
+
+  async function tambahKontrolSatu(){
+    const nama = document.getElementById('kontrolNama').value.trim();
+    const noHp = document.getElementById('kontrolNoHP').value.trim();
+    const tanggalKontrol = document.getElementById('kontrolTanggal').value;
+    if(!nama || !noHp || !tanggalKontrol){ showMsg('kontrolTambahMsg', 'Nama, No. HP, dan Tanggal wajib diisi.', false); return; }
+    const jadwalList = [{
+      noRM: document.getElementById('kontrolNoRM').value.trim(),
+      nama, noHp, tanggalKontrol,
+      dokter: document.getElementById('kontrolDokter').value.trim(),
+      poli: document.getElementById('kontrolPoli').value.trim()
+    }];
+    await kirimTambahKontrol(jadwalList);
+    document.getElementById('kontrolNoRM').value = '';
+    document.getElementById('kontrolNama').value = '';
+    document.getElementById('kontrolNoHP').value = '';
+    document.getElementById('kontrolDokter').value = '';
+    document.getElementById('kontrolPoli').value = '';
+  }
+
+  async function tambahKontrolMassal(){
+    const raw = document.getElementById('kontrolBulkInput').value.trim();
+    if(!raw) return;
+    const lines = raw.split('\n').filter(l => l.trim());
+    const jadwalList = lines.map(line => {
+      const parts = line.split(',').map(p => p.trim());
+      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '', tanggalKontrol: parts[3] || '', dokter: parts[4] || '', poli: parts[5] || '' };
+    }).filter(p => p.nama && p.noHp && p.tanggalKontrol);
+
+    if(jadwalList.length === 0){ showMsg('kontrolTambahMsg', 'Tidak ada baris valid.', false); return; }
+    await kirimTambahKontrol(jadwalList);
+    document.getElementById('kontrolBulkInput').value = '';
+  }
+
+  async function kirimTambahKontrol(jadwalList){
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addJadwalKontrol', pin: PIN, jadwalList }) });
+      const data = await res.json();
+      showMsg('kontrolTambahMsg', `${data.added} jadwal kontrol ditambahkan.`, true);
+      refreshKontrolData();
+    } catch(err){
+      showMsg('kontrolTambahMsg', 'Gagal menambahkan.', false);
+    }
+  }
+
+  async function refreshKontrolData(){
+    try{
+      const res = await fetch(`${API_URL}?action=getJadwalKontrol`);
+      const list = await res.json();
+      const body = document.getElementById('kontrolBody');
+      body.innerHTML = '';
+      document.getElementById('kontrolEmptyState').style.display = list.length === 0 ? 'block' : 'none';
+      list.forEach(k => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(k.nama)}</td>
+          <td>${escapeHtml(k.noHp)}</td>
+          <td>${escapeHtml(k.tanggalKontrol)}</td>
+          <td>${escapeHtml(k.dokter)} / ${escapeHtml(k.poli)}</td>
+          <td>${escapeHtml(k.reminderTerkirim) || '-'}</td>
+          <td><button class="ghost" onclick="hapusKontrol('${k.id}')">Hapus</button></td>
+        `;
+        body.appendChild(tr);
+      });
+    } catch(err){
+      console.error(err);
+    }
+  }
+
+  async function hapusKontrol(id){
+    if(!confirm('Hapus jadwal kontrol ini?')) return;
+    await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'hapusJadwalKontrol', pin: PIN, id }) });
+    refreshKontrolData();
+  }
+
+  async function kirimReminderKontrol(){
+    const btn = document.getElementById('btnKirimKontrol');
+    btn.disabled = true; btn.textContent = 'Memproses...';
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'kirimReminderKontrol', pin: PIN }) });
+      const data = await res.json();
+      showMsg('kirimKontrolMsg', `Reminder terkirim: ${data.sentCount}.`, true);
+      refreshKontrolData();
+    } catch(err){
+      showMsg('kirimKontrolMsg', 'Gagal memproses.', false);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Cek & Kirim Reminder Sekarang';
+    }
+  }
+
+  async function simpanPengaturanKontrol(){
+    const hariReminder = document.getElementById('hariReminderInput').value.trim() || '3,1';
+    const templateKontrol = document.getElementById('templateKontrolInput').value.trim();
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'HariReminderKontrol', value: hariReminder }) });
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'TemplateReminderKontrol', value: templateKontrol }) });
+      showMsg('kontrolSettingMsg', 'Pengaturan reminder kontrol tersimpan.', true);
+    } catch(err){
+      showMsg('kontrolSettingMsg', 'Gagal menyimpan.', false);
+    }
+  }
+
+  async function simpanAnthropicKey(){
+    const key = document.getElementById('anthropicKeyInput').value.trim();
+    const model = document.getElementById('anthropicModelInput').value.trim() || 'claude-sonnet-4-6';
+    if(!key){ showMsg('anthropicKeyMsg', 'API Key tidak boleh kosong.', false); return; }
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AnthropicApiKey', value: key }) });
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AnthropicModel', value: model }) });
+      showMsg('anthropicKeyMsg', 'API Key tersimpan.', true);
+    } catch(err){
+      showMsg('anthropicKeyMsg', 'Gagal menyimpan.', false);
+    }
+  }
+
+  // ===== UNGGAH BERKAS AI =====
+  let hasilEkstraksi = [];
+  let targetUnggahTerakhir = '';
+
+  const skemaKolom = {
+    antrian: ['nama', 'noHp', 'tanggalPulang', 'ruangan', 'jenisUcapan'],
+    master: ['noRM', 'nama', 'noHp', 'nik', 'tglLahir'],
+    kontrol: ['noRM', 'nama', 'noHp', 'tanggalKontrol', 'dokter', 'poli']
+  };
+
+  function fileToBase64(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function prosesUnggahAI(){
+    const fileInput = document.getElementById('unggahFile');
+    const target = document.getElementById('unggahTarget').value;
+    const file = fileInput.files[0];
+    if(!file){ showMsg('unggahMsg', 'Pilih berkas dulu.', false); return; }
+
+    const btn = document.getElementById('btnUnggahAI');
+    btn.disabled = true; btn.textContent = 'Membaca dengan AI...';
+    showMsg('unggahMsg', 'Sedang memproses, mohon tunggu (bisa 10-30 detik)...', true);
+
+    try{
+      const ext = file.name.split('.').pop().toLowerCase();
+      let body;
+
+      if(['xlsx','xls','csv'].includes(ext)){
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: 'array' });
+        const firstSheet = wb.Sheets[wb.SheetNames[0]];
+        const csvText = XLSX.utils.sheet_to_csv(firstSheet);
+        body = { action:'ekstrakDataAI', pin: PIN, targetType: target, mode: 'text', textContent: csvText };
+      } else {
+        const base64 = await fileToBase64(file);
+        let mediaType = file.type;
+        if(!mediaType){
+          mediaType = ext === 'pdf' ? 'application/pdf' : (ext === 'png' ? 'image/png' : 'image/jpeg');
+        }
+        body = { action:'ekstrakDataAI', pin: PIN, targetType: target, mode: 'file', base64, mediaType };
+      }
+
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(body) });
+      const result = await res.json();
+
+      if(result.error){
+        showMsg('unggahMsg', result.error, false);
+        return;
+      }
+
+      hasilEkstraksi = result.data || [];
+      targetUnggahTerakhir = target;
+      tampilkanPreview(target, hasilEkstraksi);
+      showMsg('unggahMsg', `${hasilEkstraksi.length} baris data terbaca. Cek pratinjau di bawah sebelum ditambahkan.`, true);
+    } catch(err){
+      showMsg('unggahMsg', 'Gagal memproses berkas.', false);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Baca & Ekstrak dengan AI';
+    }
+  }
+
+  function tampilkanPreview(target, rows){
+    const cols = skemaKolom[target];
+    document.getElementById('previewCard').style.display = rows.length ? 'block' : 'none';
+
+    const head = document.getElementById('previewHead');
+    head.innerHTML = '<th></th>' + cols.map(c => `<th>${c}</th>`).join('');
+
+    const body = document.getElementById('previewBody');
+    body.innerHTML = '';
+    rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      const checkboxCell = `<td><input type="checkbox" data-idx="${i}" class="preview-check" checked></td>`;
+      const dataCells = cols.map(c => `<td>${escapeHtml(row[c] || '')}</td>`).join('');
+      tr.innerHTML = checkboxCell + dataCells;
+      body.appendChild(tr);
+    });
+  }
+
+  async function konfirmasiUnggahAI(){
+    const checked = Array.from(document.querySelectorAll('.preview-check:checked')).map(c => parseInt(c.dataset.idx, 10));
+    const dataTerpilih = checked.map(i => hasilEkstraksi[i]);
+    if(dataTerpilih.length === 0){ showMsg('unggahMsg', 'Tidak ada baris yang dicentang.', false); return; }
+
+    const btn = document.getElementById('btnKonfirmasiUnggah');
+    btn.disabled = true; btn.textContent = 'Menambahkan...';
+
+    try{
+      let actionKey, listKey;
+      if(targetUnggahTerakhir === 'antrian'){ actionKey = 'addPasien'; listKey = 'pasienList'; }
+      else if(targetUnggahTerakhir === 'master'){ actionKey = 'addMasterPasien'; listKey = 'masterList'; }
+      else { actionKey = 'addJadwalKontrol'; listKey = 'jadwalList'; }
+
+      const body = { action: actionKey, pin: PIN };
+      body[listKey] = dataTerpilih;
+
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(body) });
+      const result = await res.json();
+
+      showMsg('unggahMsg', `${result.added || 0} data berhasil ditambahkan.`, true);
+      document.getElementById('previewCard').style.display = 'none';
+      hasilEkstraksi = [];
+      document.getElementById('unggahFile').value = '';
+
+      if(targetUnggahTerakhir === 'antrian') refreshData();
+      if(targetUnggahTerakhir === 'kontrol') refreshKontrolData();
+    } catch(err){
+      showMsg('unggahMsg', 'Gagal menambahkan data.', false);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Tambahkan yang Dicentang';
     }
   }
 
