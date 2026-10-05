@@ -8,55 +8,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --ink:#3a1f2b; --paper:#fff4f8; --panel:#ffffff; --line:#f2cfdc;
-    --teal:#d6336c; --teal-dark:#a61e4d; --clay:#c2255c; /* nama variabel lama, nilainya kini pink */
-    --ok:#2b8a3e; --warn:#c92a2a; --pending:#a5681a; --radius:10px;
+    --ink:#2b3a50; --paper:#e8eef6; --panel:#f5f8fc; --line:#cfdae8;
+    --teal:#4a73ad; --teal-dark:#37578a; --clay:#a8575c; /* nama variabel lama, nilainya kini biru lembut */
+    --ok:#2f6a45; --warn:#9a3a40; --pending:#7d5c1c; --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
-  .topbar{background:var(--teal-dark); color:#fff0f5; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  .topbar{background:var(--teal-dark); color:#eef4fb; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
   .topbar h1{font-size:17px; margin:0; font-weight:600;}
   .topbar .sub{font-size:12px; opacity:.7; margin-top:2px;}
   .wrap{max-width:760px; margin:0 auto; padding:20px 16px 60px;}
   #loginView{max-width:340px; margin:80px auto; padding:0 16px;}
   #loginView .card{padding:28px 24px;}
   #loginView h2{margin:0 0 4px; font-size:18px;}
-  #loginView p{color:#8a5a6e; font-size:13px; margin:0 0 20px;}
+  #loginView p{color:#5d7190; font-size:13px; margin:0 0 20px;}
   .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
-  .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#8a5a6e;}
-  input, select, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; background:#fff; color:var(--ink);}
+  .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#5d7190;}
+  input, select, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; background:#f9fbfd; color:var(--ink);}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
-  label{font-size:12px; color:#8a5a6e; display:block; margin-bottom:4px; margin-top:10px;}
+  label{font-size:12px; color:#5d7190; display:block; margin-bottom:4px; margin-top:10px;}
   label:first-child{margin-top:0;}
   textarea{min-height:90px; font-family:ui-monospace,monospace; font-size:13px; line-height:1.5;}
   button{background:var(--teal); color:#fff; border:none; border-radius:7px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
   button:hover{background:var(--teal-dark);}
-  button:disabled{background:#d3b5c3; cursor:not-allowed;}
+  button:disabled{background:#b4c0d1; cursor:not-allowed;}
   button.secondary{background:transparent; color:var(--teal); border:1px solid var(--teal);}
-  button.secondary:hover{background:#fde8ef;}
+  button.secondary:hover{background:#e1eaf6;}
   button.ghost{background:transparent; color:var(--clay); border:1px solid var(--clay); padding:6px 10px; font-size:12px; font-weight:500;}
   .row{display:flex; gap:10px; flex-wrap:wrap;}
   .row > *{flex:1; min-width:140px;}
   .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
-  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#a07a8c; border-bottom:2px solid transparent;}
+  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#5a6b85; border-bottom:2px solid transparent;}
   .tab.active{color:var(--teal-dark); border-bottom-color:var(--teal);}
   .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;}
   .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center;}
   .stat .num{font-size:22px; font-weight:700; color:var(--teal-dark);}
-  .stat .lbl{font-size:11px; color:#a07a8c; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+  .stat .lbl{font-size:11px; color:#5a6b85; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
   table{width:100%; border-collapse:collapse; font-size:13px;}
-  th{text-align:left; font-size:11px; text-transform:uppercase; color:#a07a8c; padding:6px 8px; border-bottom:1px solid var(--line);}
-  td{padding:8px; border-bottom:1px solid #f8e3ec; vertical-align:top;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; color:#5a6b85; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:8px; border-bottom:1px solid #dbe4f0; vertical-align:top;}
   .badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600;}
-  .badge.Terkirim{background:#e3f4e7; color:var(--ok);}
-  .badge.Gagal{background:#fde4e4; color:var(--warn);}
-  .badge.Pending{background:#fff1d9; color:var(--pending);}
+  .badge.Terkirim{background:#dcebe1; color:var(--ok);}
+  .badge.Gagal{background:#f2dfe0; color:var(--warn);}
+  .badge.Pending{background:#f1e9d2; color:var(--pending);}
   .msg{font-size:13px; padding:10px 12px; border-radius:7px; margin-bottom:12px; display:none;}
   .msg.show{display:block;}
-  .msg.ok{background:#e3f4e7; color:#1e5e2e;}
-  .msg.err{background:#fde4e4; color:#8a1c1c;}
-  .hint{font-size:12px; color:#a07a8c; margin-top:6px; line-height:1.5;}
-  .empty{text-align:center; padding:30px 10px; color:#a07a8c; font-size:13px;}
+  .msg.ok{background:#dcebe1; color:#2c5d40;}
+  .msg.err{background:#f2dfe0; color:#7d3338;}
+  .hint{font-size:12px; color:#5a6b85; margin-top:6px; line-height:1.5;}
+  .empty{text-align:center; padding:30px 10px; color:#5a6b85; font-size:13px;}
 </style>
 </head>
 <body>
@@ -78,7 +78,7 @@
       <h1>Ucapan &amp; Survei Kepuasan Pasien</h1>
       <div class="sub">RSU Allam Medica</div>
     </div>
-    <button class="secondary" style="color:#fff0f5; border-color:#fff0f5;" onclick="logout()">Keluar</button>
+    <button class="secondary" style="color:#eef4fb; border-color:#eef4fb;" onclick="logout()">Keluar</button>
   </div>
 
   <div class="wrap">
@@ -233,7 +233,7 @@
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahDariScan()">Tambah ke Antrian</button>
 
-        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f8e3ec;">
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #dbe4f0;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
             <input type="checkbox" id="kontrolCheckboxScan" onchange="toggleKontrolInline('scan')" style="width:auto;">
             Pasien ini juga perlu kontrol ulang
@@ -287,7 +287,7 @@
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahSatu()">Tambah ke Antrian</button>
 
-        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f8e3ec;">
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #dbe4f0;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
             <input type="checkbox" id="kontrolCheckbox" onchange="toggleKontrolInline('tambah')" style="width:auto;">
             Pasien ini juga perlu kontrol ulang
@@ -422,7 +422,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <label>Balasan jika pasien hanya menyapa (mis. "Halo", "Selamat pagi", "Assalamualaikum")</label>
         <textarea id="aiSapaanBalas" style="min-height:90px;" oninput="pratinjauSapaan()"></textarea>
         <div class="hint" style="margin-top:10px;">Contoh tampilan jawaban di WhatsApp pasien:</div>
-        <div id="sapaanPratinjau" style="margin-top:6px; padding:12px; background:#e7f5e8; border:1px solid var(--line); border-radius:8px; font-size:13px; line-height:1.55; white-space:pre-wrap;"></div>
+        <div id="sapaanPratinjau" style="margin-top:6px; padding:12px; background:#dcebe1; border:1px solid var(--line); border-radius:8px; font-size:13px; line-height:1.55; white-space:pre-wrap;"></div>
         <div class="hint">Jika pasien menyapa dengan "Assalamualaikum", sistem otomatis menambahkan "Waalaikumsalam warahmatullahi wabarakatuh." di depan balasan sapaan.</div>
 
         <h3 style="margin-top:22px;">Balasan Lainnya</h3>
@@ -453,9 +453,9 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <h3>Nomor WhatsApp Pengirim <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
         <p class="hint" style="margin-top:0;">Token dan nomor pengirim dikunci agar tidak berubah tanpa sengaja. Hanya pemilik (yang memegang PIN Pemilik) yang dapat mengubahnya.</p>
         <label>Token Fonnte</label>
-        <input type="text" id="fonnteTokenInput" readonly style="background:#fdf0f5;">
+        <input type="text" id="fonnteTokenInput" readonly style="background:#e3eaf4;">
         <label>Nomor WA Pengirim</label>
-        <input type="text" id="nomorWAInput" readonly style="background:#fdf0f5;">
+        <input type="text" id="nomorWAInput" readonly style="background:#e3eaf4;">
         <button class="secondary" style="width:100%; margin-top:14px;" onclick="bukaUbah('ubahSenderArea')">🔑 Ubah Token / Nomor (PIN Pemilik)</button>
         <div id="ubahSenderArea" style="display:none; margin-top:14px; padding:14px; border:1px dashed var(--line); border-radius:8px;">
           <label>Token Fonnte baru (kosongkan jika tidak diganti)</label>
@@ -556,7 +556,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <h3>Kunci AI (Anthropic) <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
         <p class="hint" style="margin-top:0;">Dipakai untuk fitur Unggah Berkas AI dan Tanya Jawab AI. API key dikunci dan hanya dapat diubah dengan PIN Pemilik. Dapatkan key di console.anthropic.com</p>
         <label>Anthropic API Key</label>
-        <input type="text" id="anthropicKeyInput" readonly style="background:#fdf0f5;">
+        <input type="text" id="anthropicKeyInput" readonly style="background:#e3eaf4;">
         <button class="secondary" style="width:100%; margin-top:14px;" onclick="bukaUbah('ubahKeyArea')">🔑 Ubah API Key (PIN Pemilik)</button>
         <div id="ubahKeyArea" style="display:none; margin-top:14px; padding:14px; border:1px dashed var(--line); border-radius:8px;">
           <label>API Key baru</label>
@@ -905,7 +905,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
           const div = document.createElement('div');
           div.style.marginBottom = '16px';
           div.style.paddingBottom = '16px';
-          div.style.borderBottom = '1px solid #f8e3ec';
+          div.style.borderBottom = '1px solid #dbe4f0';
           div.innerHTML = `
             <label>Jenis: <strong>${escapeHtml(t.jenis)}</strong></label>
             <textarea style="min-height:110px;" data-jenis="${escapeHtml(t.jenis)}">${escapeHtml(t.template)}</textarea>
@@ -1372,7 +1372,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       }
       list.forEach(k => {
         const div = document.createElement('div');
-        div.style.cssText = 'margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #f8e3ec;';
+        div.style.cssText = 'margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #dbe4f0;';
         div.innerHTML = `
           <input type="text" data-kbtopik="${escapeHtml(k.id)}" value="${escapeHtml(k.topik)}" style="font-weight:600;">
           <textarea data-kbisi="${escapeHtml(k.id)}" style="min-height:90px; margin-top:6px;">${escapeHtml(k.isi)}</textarea>
