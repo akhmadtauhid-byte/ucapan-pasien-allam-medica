@@ -450,12 +450,25 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
 
     <div id="tab-pengaturan" style="display:none;">
       <div class="card">
-        <h3>Nomor WhatsApp Pengirim</h3>
-        <label>Token Fonnte (dari dashboard Fonnte → Device → tombol Token). Ganti di sini kalau Anda pindah ke nomor/device WA lain.</label>
-        <input type="text" id="fonnteTokenInput" placeholder="Token dari dashboard Fonnte">
-        <label>Nomor WA Pengirim (untuk catatan/referensi saja, mis. 6281234567890)</label>
-        <input type="text" id="nomorWAInput" placeholder="62...">
-        <button style="width:100%; margin-top:14px;" onclick="simpanNomorWA()">Simpan Nomor WA Pengirim</button>
+        <h3>Nomor WhatsApp Pengirim <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
+        <p class="hint" style="margin-top:0;">Token dan nomor pengirim dikunci agar tidak berubah tanpa sengaja. Hanya pemilik (yang memegang PIN Pemilik) yang dapat mengubahnya.</p>
+        <label>Token Fonnte</label>
+        <input type="text" id="fonnteTokenInput" readonly style="background:#fdf0f5;">
+        <label>Nomor WA Pengirim</label>
+        <input type="text" id="nomorWAInput" readonly style="background:#fdf0f5;">
+        <button class="secondary" style="width:100%; margin-top:14px;" onclick="bukaUbah('ubahSenderArea')">🔑 Ubah Token / Nomor (PIN Pemilik)</button>
+        <div id="ubahSenderArea" style="display:none; margin-top:14px; padding:14px; border:1px dashed var(--line); border-radius:8px;">
+          <label>Token Fonnte baru (kosongkan jika tidak diganti)</label>
+          <input type="password" id="tokenBaruInput" autocomplete="off" placeholder="Token dari dashboard Fonnte → Device">
+          <label>Nomor WA pengirim baru (kosongkan jika tidak diganti)</label>
+          <input type="text" id="nomorBaruInput" placeholder="mis. 6281234567890">
+          <label>PIN Pemilik</label>
+          <input type="password" id="pinPemilikSender" autocomplete="off">
+          <div class="row" style="margin-top:12px;">
+            <button onclick="simpanSender()">Simpan Perubahan</button>
+            <button class="ghost" onclick="tutupUbah('ubahSenderArea')">Batal</button>
+          </div>
+        </div>
         <div class="msg" id="nomorWAMsg"></div>
       </div>
 
@@ -540,12 +553,24 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       </div>
 
       <div class="card">
-        <h3>AI untuk Baca Berkas (PDF/Gambar/Excel)</h3>
-        <label>Anthropic API Key (untuk fitur Unggah Berkas AI). Dapatkan di console.anthropic.com</label>
-        <input type="password" id="anthropicKeyInput" placeholder="sk-ant-...">
-        <label>Model (biarkan default kalau tidak yakin)</label>
+        <h3>Kunci AI (Anthropic) <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
+        <p class="hint" style="margin-top:0;">Dipakai untuk fitur Unggah Berkas AI dan Tanya Jawab AI. API key dikunci dan hanya dapat diubah dengan PIN Pemilik. Dapatkan key di console.anthropic.com</p>
+        <label>Anthropic API Key</label>
+        <input type="text" id="anthropicKeyInput" readonly style="background:#fdf0f5;">
+        <button class="secondary" style="width:100%; margin-top:14px;" onclick="bukaUbah('ubahKeyArea')">🔑 Ubah API Key (PIN Pemilik)</button>
+        <div id="ubahKeyArea" style="display:none; margin-top:14px; padding:14px; border:1px dashed var(--line); border-radius:8px;">
+          <label>API Key baru</label>
+          <input type="password" id="keyBaruInput" autocomplete="off" placeholder="sk-ant-...">
+          <label>PIN Pemilik</label>
+          <input type="password" id="pinPemilikKey" autocomplete="off">
+          <div class="row" style="margin-top:12px;">
+            <button onclick="simpanKeyAnthropic()">Simpan API Key</button>
+            <button class="ghost" onclick="tutupUbah('ubahKeyArea')">Batal</button>
+          </div>
+        </div>
+        <label style="margin-top:16px;">Model (biarkan default kalau tidak yakin)</label>
         <input type="text" id="anthropicModelInput" placeholder="claude-sonnet-4-6">
-        <button style="width:100%; margin-top:14px;" onclick="simpanAnthropicKey()">Simpan API Key</button>
+        <button class="secondary" style="width:100%; margin-top:10px;" onclick="simpanModelAnthropic()">Simpan Model</button>
         <div class="msg" id="anthropicKeyMsg"></div>
       </div>
     </div>
@@ -855,7 +880,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     try{
       const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`);
       const data = await res.json();
-      document.getElementById('fonnteTokenInput').value = data.fonnteToken || '';
+      document.getElementById('fonnteTokenInput').value = data.fonnteTokenMasked || '(belum diisi)';
       document.getElementById('nomorWAInput').value = data.nomorWAPengirim || '';
       document.getElementById('linkSurveiInput').value = data.linkSurvei || '';
       document.getElementById('defaultTemplateInput').value = data.defaultTemplate || '';
@@ -867,7 +892,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       document.getElementById('templateAdminInput').value = data.templateNotifikasiAdmin || '';
       document.getElementById('hariReminderInput').value = data.hariReminderKontrol || '3,1';
       document.getElementById('templateKontrolInput').value = data.templateReminderKontrol || '';
-      document.getElementById('anthropicKeyInput').value = data.anthropicApiKey || '';
+      document.getElementById('anthropicKeyInput').value = data.anthropicApiKeyMasked || '(belum diisi)';
+      pemilikBelumAda = (data.pinPemilikAda === false);
       document.getElementById('anthropicModelInput').value = data.anthropicModel || 'claude-sonnet-4-6';
 
       const listEl = document.getElementById('templateList');
@@ -896,17 +922,55 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     }
   }
 
-  async function simpanNomorWA(){
-    const token = document.getElementById('fonnteTokenInput').value.trim();
-    const nomor = document.getElementById('nomorWAInput').value.trim();
-    if(!token){ showMsg('nomorWAMsg', 'Token Fonnte tidak boleh kosong.', false); return; }
+  let pemilikBelumAda = false;
+
+  function bukaUbah(id){
+    if(pemilikBelumAda){ alert('PIN Pemilik belum dibuat. Buka Apps Script, jalankan fungsi amankanRahasia sekali, lalu muat ulang halaman ini.'); return; }
+    document.getElementById(id).style.display = 'block';
+  }
+  function tutupUbah(id){
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+    el.querySelectorAll('input').forEach(i => i.value = '');
+  }
+
+  // Perubahan rahasia hanya diterima server jika PIN Pemilik benar
+  async function kirimRahasia(perubahan, pinPemilik, msgId, areaId){
+    if(!pinPemilik){ showMsg(msgId, 'PIN Pemilik wajib diisi.', false); return; }
+    if(Object.keys(perubahan).length === 0){ showMsg(msgId, 'Tidak ada yang diubah.', false); return; }
     try{
-      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'FonnteToken', value: token }) });
-      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'NomorWAPengirim', value: nomor }) });
-      showMsg('nomorWAMsg', 'Nomor WA pengirim & token tersimpan.', true);
-    } catch(err){
-      showMsg('nomorWAMsg', 'Gagal menyimpan.', false);
-    }
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateRahasia', pin: PIN, pinPemilik, perubahan }) });
+      const r = await res.json();
+      if(r.success){
+        showMsg(msgId, 'Perubahan tersimpan.', true);
+        tutupUbah(areaId);
+        muatPengaturan();
+      } else {
+        showMsg(msgId, r.error || 'Gagal menyimpan.', false);
+      }
+    } catch(err){ showMsg(msgId, 'Gagal terhubung ke server.', false); }
+  }
+
+  function simpanSender(){
+    const perubahan = {};
+    const token = document.getElementById('tokenBaruInput').value.trim();
+    const nomor = document.getElementById('nomorBaruInput').value.trim();
+    if(token) perubahan.FonnteToken = token;
+    if(nomor) perubahan.NomorWAPengirim = nomor;
+    kirimRahasia(perubahan, document.getElementById('pinPemilikSender').value, 'nomorWAMsg', 'ubahSenderArea');
+  }
+
+  function simpanKeyAnthropic(){
+    const key = document.getElementById('keyBaruInput').value.trim();
+    kirimRahasia(key ? { AnthropicApiKey: key } : {}, document.getElementById('pinPemilikKey').value, 'anthropicKeyMsg', 'ubahKeyArea');
+  }
+
+  async function simpanModelAnthropic(){
+    const model = document.getElementById('anthropicModelInput').value.trim() || 'claude-sonnet-4-6';
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AnthropicModel', value: model }) });
+      showMsg('anthropicKeyMsg', 'Model tersimpan.', true);
+    } catch(err){ showMsg('anthropicKeyMsg', 'Gagal menyimpan.', false); }
   }
 
   async function simpanLinkSurvei(){
@@ -1134,19 +1198,6 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       showMsg('kontrolSettingMsg', 'Pengaturan reminder kontrol tersimpan.', true);
     } catch(err){
       showMsg('kontrolSettingMsg', 'Gagal menyimpan.', false);
-    }
-  }
-
-  async function simpanAnthropicKey(){
-    const key = document.getElementById('anthropicKeyInput').value.trim();
-    const model = document.getElementById('anthropicModelInput').value.trim() || 'claude-sonnet-4-6';
-    if(!key){ showMsg('anthropicKeyMsg', 'API Key tidak boleh kosong.', false); return; }
-    try{
-      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AnthropicApiKey', value: key }) });
-      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AnthropicModel', value: model }) });
-      showMsg('anthropicKeyMsg', 'API Key tersimpan.', true);
-    } catch(err){
-      showMsg('anthropicKeyMsg', 'Gagal menyimpan.', false);
     }
   }
 
