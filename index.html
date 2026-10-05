@@ -9,20 +9,64 @@
 <style>
   :root{
     --ink:#2b3a50; --paper:#e8eef6; --panel:#f5f8fc; --line:#cfdae8;
-    --teal:#4a73ad; --teal-dark:#37578a; --clay:#a8575c; /* nama variabel lama, nilainya kini biru lembut */
+    --teal:#4a73ad; --teal-dark:#37578a; --clay:#a8575c; /* nama variabel lama; nilainya biru lembut & tidak silau */
     --ok:#2f6a45; --warn:#9a3a40; --pending:#7d5c1c; --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
-  .topbar{background:var(--teal-dark); color:#eef4fb; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
-  .topbar h1{font-size:17px; margin:0; font-weight:600;}
-  .topbar .sub{font-size:12px; opacity:.7; margin-top:2px;}
-  .wrap{max-width:760px; margin:0 auto; padding:20px 16px 60px;}
+  .app{display:grid; grid-template-columns:248px minmax(0,1fr); min-height:100vh;}
+  .side{background:linear-gradient(180deg,#3b5f95,#2a4673); color:#e8f0fb; position:sticky; top:0; height:100vh; overflow-y:auto; padding:16px 12px 20px; display:flex; flex-direction:column; gap:10px;}
+  .brand{display:flex; gap:10px; align-items:center; padding:2px 4px 12px; border-bottom:1px solid rgba(255,255,255,.14);}
+  .brand .logo{width:40px; height:40px; border-radius:11px; background:#dbe7f8; color:#25446f; font-weight:800; display:grid; place-items:center; font-size:15px; flex:none;}
+  .brand b{display:block; font-size:16px; letter-spacing:.03em;} .brand span{font-size:11px; opacity:.75;}
+  .side-box{background:rgba(255,255,255,.09); border-radius:10px; padding:9px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .side-box small{display:block; font-size:10px; letter-spacing:.1em; opacity:.7; text-transform:uppercase;} .side-box b{font-size:13px;}
+  .side-box button{background:#dbe7f8; color:#25446f; padding:5px 11px; font-size:12px;} .side-box button:hover{background:#eef4fc;}
+  .nav-group{font-size:10px; letter-spacing:.12em; opacity:.6; margin:8px 8px 2px; text-transform:uppercase;}
+  .tab{display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:500; color:#dbe7f8; user-select:none;}
+  .tab:hover{background:rgba(255,255,255,.1);}
+  .tab.active{background:#eef4fc; color:#25446f; font-weight:700;}
+  .tab .ic{width:20px; text-align:center; flex:none;}
+  .nav-badge{margin-left:auto; background:#e5534b; color:#fff; border-radius:99px; font-size:11px; font-weight:700; padding:1px 7px; display:none;}
+  .tab.active .nav-badge{background:#25446f; color:#fff;}
+  .main{min-width:0;}
+  .mhead{display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px 22px; background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5;}
+  .mhead h2{margin:0; font-size:19px;} .mhead .psub{font-size:12px; color:#5d7190; margin-top:1px;}
+  .mhead .grow{flex:1; min-width:150px;}
+  .menu-btn{display:none; padding:7px 11px; font-size:16px; line-height:1;}
+  .overlay{display:none;}
+  .wrap{max-width:1240px; margin:0 auto; padding:16px 22px 40px;}
+  .narrow{max-width:800px; margin-left:auto; margin-right:auto;}
+  .split{display:grid; grid-template-columns:minmax(280px,360px) minmax(0,1fr); gap:14px; align-items:start;}
+  .grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:start;}
+  .masonry{columns:2 420px; column-gap:14px;} .masonry > .card{break-inside:avoid;}
+  .filters{display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:8px 10px; margin-top:10px;}
+  .filters label{margin-top:0;}
+  .toolbar{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; align-items:center;}
+  .toolbar button{padding:7px 12px; font-size:12.5px;} .toolbar input{width:auto; flex:1; min-width:150px;}
+  .tscroll{overflow:auto; max-height:min(58vh,560px);} .tscroll.sm{max-height:250px;}
+  details.fold > summary{cursor:pointer; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#5d7190; list-style:none;}
+  details.fold > summary::before{content:'▸ '; display:inline-block; transition:transform .15s;} details.fold[open] > summary::before{transform:rotate(90deg);}
+  details.fold[open] > summary{margin-bottom:12px;}
+  @media (max-width:1000px){ .split, .grid2{grid-template-columns:1fr;} .masonry{columns:1;} }
+  @media (max-width:900px){
+    .app{grid-template-columns:1fr;}
+    .side{position:fixed; left:0; top:0; z-index:30; width:262px; transform:translateX(-100%); transition:transform .2s;}
+    .side.open{transform:none;}
+    .overlay.show{display:block; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:20;}
+    .menu-btn{display:inline-block;}
+    .wrap{padding:12px 12px 40px;} .mhead{padding:10px 12px;}
+  }
+  .stats{display:flex; gap:8px; flex-wrap:wrap;}
+  .stat{background:#eef3fa; border:1px solid var(--line); border-radius:99px; padding:4px 12px; display:flex; gap:6px; align-items:baseline;}
+  .stat .num{font-size:15px; font-weight:700; color:var(--teal-dark);}
+  .stat .lbl{font-size:11px; color:#5d7190; text-transform:uppercase; letter-spacing:.04em;}
   #loginView{max-width:340px; margin:80px auto; padding:0 16px;}
+  #loginView .logo{width:46px; height:46px; border-radius:12px; background:#4a73ad; color:#fff; font-weight:800; display:grid; place-items:center; margin-bottom:12px;}
   #loginView .card{padding:28px 24px;}
   #loginView h2{margin:0 0 4px; font-size:18px;}
   #loginView p{color:#5d7190; font-size:13px; margin:0 0 20px;}
-  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px;}
   .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#5d7190;}
   input, select, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; background:#f9fbfd; color:var(--ink);}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
@@ -37,26 +81,34 @@
   button.ghost{background:transparent; color:var(--clay); border:1px solid var(--clay); padding:6px 10px; font-size:12px; font-weight:500;}
   .row{display:flex; gap:10px; flex-wrap:wrap;}
   .row > *{flex:1; min-width:140px;}
-  .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
-  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#5a6b85; border-bottom:2px solid transparent;}
-  .tab.active{color:var(--teal-dark); border-bottom-color:var(--teal);}
-  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;}
-  .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center;}
-  .stat .num{font-size:22px; font-weight:700; color:var(--teal-dark);}
-  .stat .lbl{font-size:11px; color:#5a6b85; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
   table{width:100%; border-collapse:collapse; font-size:13px;}
-  th{text-align:left; font-size:11px; text-transform:uppercase; color:#5a6b85; padding:6px 8px; border-bottom:1px solid var(--line);}
-  td{padding:8px; border-bottom:1px solid #dbe4f0; vertical-align:top;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; color:#5d7190; padding:7px 8px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#eef3fa; z-index:1;}
+  td{padding:6px 8px; border-bottom:1px solid #dbe4f0; vertical-align:top;}
   .badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600;}
   .badge.Terkirim{background:#dcebe1; color:var(--ok);}
   .badge.Gagal{background:#f2dfe0; color:var(--warn);}
   .badge.Pending{background:#f1e9d2; color:var(--pending);}
+  .badge.w-abu{background:#e4e9f1; color:#5d7190;}
+  .badge.w-kuning{background:#f6ecc4; color:#7a5d00;}
+  .badge.w-oranye{background:#f8dcc0; color:#9a4a00;}
+  .badge.w-merah{background:#f3d3d5; color:#a12a31;}
+  .badge.w-hijau{background:#d3ebdc; color:#1e6a3a;}
+  .badge.w-biru{background:#d6e3f6; color:#274b82;}
+  .tile{background:#fff;}
+  tr.r-terlewat td{background:#fbefef;} tr.r-hariini td{background:#fdf3e6;} tr.r-segera td{background:#fcf8e4;} tr.r-selesai td{background:#eef7f1;}
+  .tile{flex:1 1 140px; border:1px solid var(--line); border-radius:10px; padding:8px 14px; background:#fff; cursor:default;}
+  .tile .n{font-size:22px; font-weight:700; line-height:1.1;} .tile .l{font-size:12px; color:#5d7190; margin-top:2px;}
+  .btn-mini{padding:4px 8px !important; font-size:11px !important; margin:1px;}
+  .bar{height:8px; border-radius:99px; background:#e4e9f1; overflow:hidden; min-width:80px;} .bar > i{display:block; height:100%; background:#4a74b0;}
+  #printOnly .listcetak{font-family:Arial,sans-serif; font-size:11px; color:#000;}
+  #printOnly .listcetak h2{margin:0 0 4px; font-size:16px;} #printOnly .listcetak p{margin:0 0 8px; font-size:11px;}
+  #printOnly .listcetak table{width:100%; border-collapse:collapse;} #printOnly .listcetak th, #printOnly .listcetak td{border:1px solid #888; padding:4px 6px; text-align:left;} #printOnly .listcetak th{background:#e8e8e8;}
   .msg{font-size:13px; padding:10px 12px; border-radius:7px; margin-bottom:12px; display:none;}
   .msg.show{display:block;}
   .msg.ok{background:#dcebe1; color:#2c5d40;}
   .msg.err{background:#f2dfe0; color:#7d3338;}
-  .hint{font-size:12px; color:#5a6b85; margin-top:6px; line-height:1.5;}
-  .empty{text-align:center; padding:30px 10px; color:#5a6b85; font-size:13px;}
+  .hint{font-size:12px; color:#5d7190; margin-top:6px; line-height:1.5;}
+  .empty{text-align:center; padding:30px 10px; color:#5d7190; font-size:13px;}
 
   /* ===== Materi Sosialisasi (poster/kartu) ===== */
   .posterWrap{overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#dbe4f0; padding:10px; display:flex; justify-content:center;}
@@ -99,6 +151,7 @@
 
 <div id="loginView">
   <div class="card">
+    <div class="logo">UP</div>
     <h2>Ucapan &amp; Survei Pasien</h2>
     <p>RSU Allam Medica — masukkan PIN admin</p>
     <label>PIN</label>
@@ -109,32 +162,118 @@
 </div>
 
 <div id="mainView" style="display:none;">
-  <div class="topbar">
-    <div>
-      <h1>Ucapan &amp; Survei Kepuasan Pasien</h1>
-      <div class="sub">RSU Allam Medica</div>
-    </div>
-    <button class="secondary" style="color:#eef4fb; border-color:#eef4fb;" onclick="logout()">Keluar</button>
-  </div>
-
+  <div class="app">
+  <aside class="side" id="sideMenu">
+    <div class="brand"><div class="logo">UP</div><div><b>UCAPAN-RS</b><span>RSU Allam Medica</span></div></div>
+    <div class="side-box"><div><small>Login sebagai</small><b>Admin</b></div><button onclick="logout()">Keluar</button></div>
+    <nav>
+      <div class="nav-group">Layanan</div>
+      <div class="tab active" data-tab="scan" onclick="switchTab('scan')"><span class="ic">📷</span><span>Scan Pasien</span></div>
+      <div class="tab" data-tab="tambah" onclick="switchTab('tambah')"><span class="ic">✍️</span><span>Tambah Manual</span></div>
+      <div class="tab" data-tab="antrian" onclick="switchTab('antrian')"><span class="ic">📨</span><span>Antrian Kirim</span></div>
+      <div class="nav-group">Data pasien</div>
+      <div class="tab" data-tab="master" onclick="switchTab('master')"><span class="ic">🗂️</span><span>Data Master</span></div>
+      <div class="tab" data-tab="kontrol" onclick="switchTab('kontrol')"><span class="ic">🩺</span><span>Kontrol Pasien</span></div>
+      <div class="tab" data-tab="tindak" onclick="switchTab('tindak')"><span class="ic">🔔</span><span>Tindak Lanjut</span><span class="nav-badge" id="tabTindakBadge"></span></div>
+      <div class="tab" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="ic">📊</span><span>Dashboard</span></div>
+      <div class="nav-group">Otomasi</div>
+      <div class="tab" data-tab="unggah" onclick="switchTab('unggah')"><span class="ic">📄</span><span>Unggah Berkas (AI)</span></div>
+      <div class="tab" data-tab="ai" onclick="switchTab('ai')"><span class="ic">🤖</span><span>Tanya Jawab AI</span></div>
+      <div class="nav-group">Lainnya</div>
+      <div class="tab" data-tab="sosialisasi" onclick="switchTab('sosialisasi')"><span class="ic">📣</span><span>Sosialisasi</span></div>
+      <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')"><span class="ic">⚙️</span><span>Pengaturan</span></div>
+    </nav>
+  </aside>
+  <div class="overlay" id="menuOverlay" onclick="toggleMenu(false)"></div>
+  <main class="main">
+    <header class="mhead">
+      <button class="menu-btn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+      <div class="grow"><h2 id="pageTitle">Scan Pasien</h2><div class="psub" id="pageSub"></div></div>
+      <div class="stats">
+        <div class="stat"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
+        <div class="stat"><div class="num" id="statTerkirim">–</div><div class="lbl">Terkirim</div></div>
+        <div class="stat"><div class="num" id="statPending">–</div><div class="lbl">Pending</div></div>
+        <div class="stat"><div class="num" id="statGagal">–</div><div class="lbl">Gagal</div></div>
+      </div>
+    </header>
   <div class="wrap">
-    <div class="stats">
-      <div class="stat"><div class="num" id="statTotal">–</div><div class="lbl">Total</div></div>
-      <div class="stat"><div class="num" id="statTerkirim">–</div><div class="lbl">Terkirim</div></div>
-      <div class="stat"><div class="num" id="statPending">–</div><div class="lbl">Pending</div></div>
-      <div class="stat"><div class="num" id="statGagal">–</div><div class="lbl">Gagal</div></div>
+    <div id="tab-tindak" style="display:none;">
+      <div class="card">
+        <h3>Perlu Ditindaklanjuti</h3>
+        <p class="hint" style="margin-top:0;">Daftar kerja harian: pasien yang perlu diingatkan, yang kontrol hari ini/besok, dan yang terlewat. Tanda warna berubah otomatis sesuai selisih hari ke tanggal kontrol (batas "segera" diatur di Pengaturan).</p>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <div class="tile"><div class="n" id="tileDiingatkan">0</div><div class="l">Perlu diingatkan</div></div>
+          <div class="tile"><div class="n" id="tileHariIni">0</div><div class="l">Kontrol hari ini &amp; besok</div></div>
+          <div class="tile"><div class="n" id="tileTerlewat">0</div><div class="l">Terlewat (belum kembali)</div></div>
+          <div class="tile"><div class="n" id="tileSelesai">0</div><div class="l">Sudah datang bulan ini</div></div>
+        </div>
+        <div class="msg" id="tindakMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>1. Perlu diingatkan <span class="hint" id="cntA" style="text-transform:none; letter-spacing:0;"></span></h3>
+        <p class="hint" style="margin-top:0;">Kontrol dalam waktu dekat dan belum pernah dikirimi pengingat.</p>
+        <div class="toolbar" style="margin-top:0;">
+          <button class="secondary" onclick="pilihSeksi('A', true)">Pilih semua</button>
+          <button class="ghost" onclick="pilihSeksi('A', false)">Kosongkan</button>
+          <button id="btnKirimA" onclick="kirimSeksi('A')">📨 Kirim pengingat (yang dicentang)</button>
+        </div>
+        <div class="tscroll sm"><table><thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Status</th><th>Tandai</th></tr></thead><tbody id="bodyA"></tbody></table></div>
+        <div class="empty" id="emptyA" style="display:none;">Tidak ada pasien yang perlu diingatkan.</div>
+      </div>
+
+      <div class="card">
+        <h3>2. Kontrol hari ini &amp; besok <span class="hint" id="cntB" style="text-transform:none; letter-spacing:0;"></span></h3>
+        <p class="hint" style="margin-top:0;">Tandai "Datang" saat pasien hadir; sistem menawarkan jadwal kontrol berikutnya.</p>
+        <div class="tscroll sm"><table><thead><tr><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Status</th><th>Tandai</th></tr></thead><tbody id="bodyB"></tbody></table></div>
+        <div class="empty" id="emptyB" style="display:none;">Tidak ada jadwal kontrol hari ini atau besok.</div>
+      </div>
+
+      <div class="card">
+        <h3>3. Terlewat — belum kembali <span class="hint" id="cntC" style="text-transform:none; letter-spacing:0;"></span></h3>
+        <p class="hint" style="margin-top:0;">Tanggal kontrol sudah lewat dan belum ditandai datang. Kirim pesan susulan (maksimal satu kali per jadwal) atau jadwalkan ulang.</p>
+        <div class="toolbar" style="margin-top:0;">
+          <button class="secondary" onclick="pilihSeksi('C', true)">Pilih semua</button>
+          <button class="ghost" onclick="pilihSeksi('C', false)">Kosongkan</button>
+          <button id="btnKirimC" onclick="kirimSeksi('C')">📨 Kirim pesan susulan (yang dicentang)</button>
+        </div>
+        <div class="tscroll sm"><table><thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Status</th><th>Susulan</th><th>Tandai</th></tr></thead><tbody id="bodyC"></tbody></table></div>
+        <div class="empty" id="emptyC" style="display:none;">Tidak ada pasien terlewat.</div>
+      </div>
     </div>
 
-    <div class="tabs">
-      <div class="tab active" data-tab="scan" onclick="switchTab('scan')">Scan Pasien</div>
-      <div class="tab" data-tab="tambah" onclick="switchTab('tambah')">Tambah Manual</div>
-      <div class="tab" data-tab="antrian" onclick="switchTab('antrian')">Antrian Kirim</div>
-      <div class="tab" data-tab="master" onclick="switchTab('master')">Data Master</div>
-      <div class="tab" data-tab="kontrol" onclick="switchTab('kontrol')">Kontrol Pasien</div>
-      <div class="tab" data-tab="unggah" onclick="switchTab('unggah')">Unggah Berkas (AI)</div>
-      <div class="tab" data-tab="ai" onclick="switchTab('ai')">Tanya Jawab AI</div>
-      <div class="tab" data-tab="sosialisasi" onclick="switchTab('sosialisasi')">Sosialisasi</div>
-      <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')">Pengaturan</div>
+    <div id="tab-dashboard" style="display:none;">
+      <div class="card">
+        <h3>Dashboard Kepatuhan Kontrol</h3>
+        <p class="hint" style="margin-top:0;">Dihitung dari jadwal kontrol yang tanggalnya sudah lewat dalam rentang yang dipilih. "Tingkat kembali" = jumlah pasien ditandai Datang dibagi seluruh jadwal pada periode itu.</p>
+        <div class="row">
+          <div><label style="margin-top:0;">Dari tanggal</label><input type="date" id="dashDari" onchange="renderDashboard()"></div>
+          <div><label style="margin-top:0;">Sampai tanggal</label><input type="date" id="dashSampai" onchange="renderDashboard()"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangDash(30)">30 hari terakhir</button>
+          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangDash(90)">90 hari terakhir</button>
+          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangDash('bulan')">Bulan ini</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;">
+          <div class="tile"><div class="n" id="dTotal">0</div><div class="l">Jadwal (sudah lewat)</div></div>
+          <div class="tile"><div class="n" id="dDatang">0</div><div class="l">Datang</div></div>
+          <div class="tile"><div class="n" id="dUlang">0</div><div class="l">Jadwal ulang</div></div>
+          <div class="tile"><div class="n" id="dTidak">0</div><div class="l">Tidak datang</div></div>
+          <div class="tile"><div class="n" id="dBelum">0</div><div class="l">Belum ditandai</div></div>
+          <div class="tile"><div class="n" id="dPersen">0%</div><div class="l">Tingkat kembali</div></div>
+        </div>
+      </div>
+      <div class="grid2">
+      <div class="card">
+        <h3>Per Dokter</h3>
+        <div class="tscroll"><table><thead><tr><th>Dokter</th><th>Jadwal</th><th>Datang</th><th>Ulang</th><th>Tidak</th><th>Belum</th><th>Kembali</th></tr></thead><tbody id="dashDokter"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Per Kasus / Terapi</h3>
+        <div class="tscroll"><table><thead><tr><th>Kasus</th><th>Jadwal</th><th>Datang</th><th>Ulang</th><th>Tidak</th><th>Belum</th><th>Kembali</th></tr></thead><tbody id="dashKasus"></tbody></table></div>
+      </div>
+      </div>
     </div>
 
     <div id="tab-unggah" style="display:none;">
@@ -159,7 +298,7 @@
       <div class="card" id="previewCard" style="display:none;">
         <h3>Pratinjau Hasil Ekstraksi</h3>
         <p class="hint" style="margin-top:0;">Periksa dulu, hilangkan centang pada baris yang salah/tidak perlu sebelum ditambahkan.</p>
-        <div style="overflow-x:auto;">
+        <div class="tscroll">
           <table id="previewTable">
             <thead><tr id="previewHead"></tr></thead>
             <tbody id="previewBody"></tbody>
@@ -170,7 +309,8 @@
     </div>
 
     <div id="tab-kontrol" style="display:none;">
-      <div class="card">
+      <details class="card fold"><summary>➕ Tambah jadwal kontrol &amp; pengingat otomatis</summary>
+      <div>
         <h3>Tambah Jadwal Kontrol</h3>
         <div class="row">
           <div>
@@ -209,7 +349,7 @@
         <button style="width:100%; margin-top:14px;" onclick="tambahKontrolSatu()">Tambah Jadwal</button>
       </div>
 
-      <div class="card">
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">
         <h3>Tambah Massal (Tempel dari Excel)</h3>
         <label>Format per baris: No.RM, Nama, No.HP, Tanggal (YYYY-MM-DD), Dokter, Poli, Kasus (kolom terakhir boleh dikosongkan)</label>
         <textarea id="kontrolBulkInput" placeholder="000123, Budi Santoso, 081234567890, 2026-09-10, dr. Andi, Poli Umum, Hipertensi"></textarea>
@@ -217,32 +357,35 @@
         <div class="msg" id="kontrolTambahMsg"></div>
       </div>
 
-      <div class="card">
+      <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">
         <button style="width:100%;" onclick="kirimReminderKontrol()" id="btnKirimKontrol">Cek &amp; Kirim Reminder Sekarang</button>
         <div class="hint">Reminder dikirim otomatis sesuai hari yang diatur di tab Pengaturan (mis. H-3 dan H-1). Bisa juga dipicu manual di sini.</div>
         <div class="msg" id="kirimKontrolMsg"></div>
       </div>
 
+      </details>
+
       <div class="card">
-        <h3>Skrining Pasien Kontrol</h3>
-        <p class="hint" style="margin-top:0;">Pilih rentang tanggal kontrol, periksa daftarnya, centang pasien yang akan dikirimi pengingat WhatsApp, lalu kirim.</p>
-        <div class="row">
-          <div><label style="margin-top:0;">Dari tanggal</label><input type="date" id="skrinDari" onchange="renderKontrol()"></div>
-          <div><label style="margin-top:0;">Sampai tanggal</label><input type="date" id="skrinSampai" onchange="renderKontrol()"></div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; justify-content:space-between;">
+          <h3 style="margin:0;">Skrining Pasien Kontrol</h3>
+          <div id="skrinRingkas" style="font-size:13px; font-weight:700;">0 pasien</div>
         </div>
-        <div class="row" style="margin-top:8px;">
-          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('hariini')">Hari ini</button>
-          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('besok')">Besok</button>
-          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('7hari')">7 hari ke depan</button>
-          <button class="secondary" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('bulan')">Bulan ini</button>
-          <button class="ghost" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('semua')">Semua tanggal</button>
-        </div>
-        <div class="row">
+        <details class="fold" open style="margin-top:10px;"><summary style="font-size:12px;">🔎 Filter (klik untuk menyembunyikan / menampilkan)</summary>
+        <div class="filters">
+          <div><label>Dari tanggal</label><input type="date" id="skrinDari" onchange="renderKontrol()"></div>
+          <div><label>Sampai tanggal</label><input type="date" id="skrinSampai" onchange="renderKontrol()"></div>
           <div><label>Dokter</label><select id="skrinDokter" onchange="renderKontrol()"><option value="">Semua dokter</option></select></div>
           <div><label>Kasus / Terapi</label><select id="skrinKasus" onchange="renderKontrol()"><option value="">Semua kasus</option></select></div>
-        </div>
-        <div class="row">
           <div><label>Poli</label><input type="text" id="skrinPoli" placeholder="mis. Poli Umum" oninput="renderKontrol()"></div>
+          <div><label>Status waktu</label>
+            <select id="skrinWaktu" onchange="renderKontrol()">
+              <option value="">Semua</option>
+              <option value="perlu">Perlu diingatkan</option>
+              <option value="hariini">Hari ini &amp; besok</option>
+              <option value="terlewat">Terlewat</option>
+              <option value="selesai">Sudah datang / ulang</option>
+            </select>
+          </div>
           <div><label>Status pengingat</label>
             <select id="skrinStatus" onchange="renderKontrol()">
               <option value="semua">Semua</option>
@@ -250,28 +393,40 @@
               <option value="sudah">Sudah pernah diingatkan</option>
             </select>
           </div>
+          <div><label>Cari nama / No. RM / HP</label><input type="text" id="skrinCari" placeholder="Ketik untuk mencari..." oninput="renderKontrol()"></div>
         </div>
-        <label>Cari nama / No. RM / No. HP</label>
-        <input type="text" id="skrinCari" placeholder="Ketik untuk mencari..." oninput="renderKontrol()">
-        <div style="margin-top:12px; font-size:13px;"><strong id="skrinRingkas">0 pasien</strong></div>
-        <div class="hint" style="margin-bottom:4px;">Ringkasan kelompok (klik untuk menyaring):</div>
-        <div id="skrinKelompok" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
-        <div class="row" style="margin-top:10px;">
-          <button class="secondary" onclick="pilihSemuaSkrin(true)">Pilih Semua yang Tampil</button>
-          <button class="ghost" style="padding:11px 18px; font-size:14px;" onclick="pilihSemuaSkrin(false)">Kosongkan Pilihan</button>
+        <div class="toolbar">
+          <span class="hint" style="margin:0;">Rentang cepat:</span>
+          <button class="secondary" onclick="rentangSkrin('hariini')">Hari ini</button>
+          <button class="secondary" onclick="rentangSkrin('besok')">Besok</button>
+          <button class="secondary" onclick="rentangSkrin('7hari')">7 hari</button>
+          <button class="secondary" onclick="rentangSkrin('bulan')">Bulan ini</button>
+          <button class="ghost" onclick="rentangSkrin('semua')">Semua tanggal</button>
         </div>
-        <div class="row" style="margin-top:12px; align-items:flex-end;">
-          <div><label style="margin-top:0;">Tetapkan kasus untuk yang dicentang</label><input type="text" id="skrinSetKasus" list="kasusList" placeholder="mis. Hipertensi (kosongkan = hapus kasus)"></div>
-          <div style="flex:0 0 auto;"><button class="secondary" onclick="setKasusTerpilih()">Terapkan</button></div>
+        <div class="toolbar" id="skrinKelompok" style="margin-top:8px;"></div>
+        </details>
+        <div class="toolbar">
+          <button class="secondary" onclick="pilihSemuaSkrin(true)">Pilih semua</button>
+          <button class="ghost" onclick="pilihSemuaSkrin(false)">Kosongkan</button>
+          <button id="btnKirimTerpilih" onclick="kirimTerpilih()">📨 Kirim pengingat (yang dicentang)</button>
+          <button class="secondary" onclick="tandaiTerpilih('Datang')">✓ Datang</button>
+          <button class="secondary" onclick="tandaiTerpilih('Jadwal ulang')">↻ Jadwal ulang</button>
+          <button class="secondary" onclick="tandaiTerpilih('Tidak datang')">✗ Tidak datang</button>
+          <button class="ghost" onclick="tandaiTerpilih('')">Hapus tanda</button>
+          <button class="secondary" onclick="unduhCSV()">⬇ Excel</button>
+          <button class="secondary" onclick="cetakDaftar()">🖨 Cetak</button>
         </div>
-        <button style="width:100%; margin-top:12px;" id="btnKirimTerpilih" onclick="kirimTerpilih()">Kirim Pengingat ke yang Dicentang</button>
-        <div class="msg" id="skrinMsg"></div>
+        <div class="toolbar">
+          <input type="text" id="skrinSetKasus" list="kasusList" placeholder="Tetapkan kasus untuk yang dicentang, mis. Hipertensi">
+          <button class="secondary" onclick="setKasusTerpilih()">Terapkan kasus</button>
+        </div>
+        <div class="msg" id="skrinMsg" style="margin-top:10px; margin-bottom:0;"></div>
       </div>
 
       <div class="card" style="padding:0;">
-        <div style="overflow-x:auto;">
+        <div class="tscroll fill">
           <table id="kontrolTable">
-            <thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Reminder</th><th></th></tr></thead>
+            <thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Status</th><th>Reminder</th><th></th></tr></thead>
             <tbody id="kontrolBody"></tbody>
           </table>
         </div>
@@ -279,7 +434,7 @@
       </div>
     </div>
 
-    <div id="tab-scan">
+    <div id="tab-scan" class="narrow">
       <div class="card">
         <h3>Scan Barcode Pasien</h3>
         <label>No. Rekam Medis (scan dengan scanner USB, atau ketik manual lalu Enter)</label>
@@ -341,7 +496,7 @@
       </div>
     </div>
 
-    <div id="tab-tambah" style="display:none;">
+    <div id="tab-tambah" class="narrow" style="display:none;">
       <div class="card">
         <h3>Tambah Satu Pasien</h3>
         <label>Nama Pasien</label>
@@ -415,7 +570,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         <div class="msg" id="kirimMsg"></div>
       </div>
       <div class="card" style="padding:0;">
-        <div style="overflow-x:auto;">
+        <div class="tscroll">
           <table id="antrianTable">
             <thead><tr><th>Nama</th><th>No. HP</th><th>Jenis</th><th>Status</th><th></th></tr></thead>
             <tbody id="antrianBody"></tbody>
@@ -425,7 +580,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       </div>
     </div>
 
-    <div id="tab-master" style="display:none;">
+    <div id="tab-master" style="display:none;"><div class="split">
       <div class="card">
         <h3>Tambah / Update Data Master (No. RM → Nama, No. HP)</h3>
         <p class="hint" style="margin-top:0;">Isi data ini sekali di awal (atau saat ada pasien baru) supaya scan barcode langsung mengenali nama & no. HP pasien.</p>
@@ -439,12 +594,12 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       <div class="card">
         <h3>Daftar Data Master <span class="hint" id="masterCount" style="text-transform:none; letter-spacing:0;"></span></h3>
         <input type="text" id="masterCari" placeholder="Cari No. RM, nama, atau No. HP..." oninput="renderMasterList()">
-        <div class="row" style="margin-top:10px;">
-          <button class="secondary" onclick="muatMaster()">Muat Ulang</button>
-          <button class="secondary" onclick="pilihSemuaMaster(true)">Pilih Semua yang Tampil</button>
-          <button class="ghost" style="padding:11px 18px; font-size:14px;" onclick="pilihSemuaMaster(false)">Kosongkan Pilihan</button>
+        <div class="toolbar">
+          <button class="secondary" onclick="muatMaster()">Muat ulang</button>
+          <button class="secondary" onclick="pilihSemuaMaster(true)">Pilih semua yang tampil</button>
+          <button class="ghost" onclick="pilihSemuaMaster(false)">Kosongkan</button>
         </div>
-        <div style="overflow-x:auto; margin-top:12px;">
+        <div class="tscroll md">
           <table>
             <thead><tr><th style="width:34px;"></th><th>No. RM</th><th>Nama</th><th>No. HP</th><th></th></tr></thead>
             <tbody id="masterBody"></tbody>
@@ -466,9 +621,9 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
         </div>
         <div class="msg" id="masterListMsg"></div>
       </div>
-    </div>
+    </div></div>
 
-    <div id="tab-ai" style="display:none;">
+    <div id="tab-ai" class="masonry" style="display:none;">
       <div class="card">
         <h3>Status &amp; Sambungan WhatsApp</h3>
         <label>Balas otomatis oleh AI</label>
@@ -561,7 +716,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       <div class="card" style="padding:0;">
         <div style="padding:18px 18px 0;"><h3>Riwayat Percakapan (50 terakhir)</h3>
           <button class="secondary" style="margin-bottom:10px;" onclick="muatRiwayatAI()">Muat Ulang</button></div>
-        <div style="overflow-x:auto;">
+        <div class="tscroll">
           <table>
             <thead><tr><th>Waktu</th><th>No. WA</th><th>Pertanyaan</th><th>Balasan</th><th>Status</th></tr></thead>
             <tbody id="riwayatAIBody"></tbody>
@@ -571,7 +726,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       </div>
     </div>
 
-    <div id="tab-sosialisasi" style="display:none;">
+    <div id="tab-sosialisasi" class="narrow" style="display:none;">
       <div class="card">
         <h3>Materi Sosialisasi</h3>
         <p class="hint" style="margin-top:0;">Buat kode QR, tautan, poster, dan kartu meja agar masyarakat mudah menghubungi layanan WhatsApp RS tanpa perlu mengingat nomor. Isi di bawah dipakai untuk semua materi.</p>
@@ -638,7 +793,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       </div>
     </div>
 
-    <div id="tab-pengaturan" style="display:none;">
+    <div id="tab-pengaturan" class="masonry" style="display:none;">
       <div class="card">
         <h3>Nomor WhatsApp Pengirim <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
         <p class="hint" style="margin-top:0;">Token dan nomor pengirim dikunci agar tidak berubah tanpa sengaja. Hanya pemilik (yang memegang PIN Pemilik) yang dapat mengubahnya.</p>
@@ -747,6 +902,26 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       </div>
 
       <div class="card">
+        <h3>Penandaan Waktu &amp; Tindak Lanjut</h3>
+        <label>Batas "segera diingatkan" (hari sebelum tanggal kontrol → baris berwarna kuning)</label>
+        <input type="number" min="1" max="60" id="ambangSegeraInput" placeholder="7">
+        <label>Jarak kontrol berikutnya, standar (hari) — dipakai saat pasien ditandai "Datang"</label>
+        <input type="number" min="1" max="365" id="intervalKontrolInput" placeholder="30">
+        <label>Jarak kontrol per kasus (satu baris satu kasus, format: Kasus = jumlah hari)</label>
+        <textarea id="intervalKasusInput" style="min-height:80px;" placeholder="Hipertensi = 30&#10;Kehamilan/ANC = 14"></textarea>
+        <label>Pesan susulan otomatis untuk pasien yang terlewat (H+1, maksimal satu kali)</label>
+        <select id="susulanOtomatisSelect"><option value="OFF">Nonaktif (petugas mengirim manual dari tab Tindak Lanjut)</option><option value="ON">Aktif (dikirim otomatis tiap pagi)</option></select>
+        <label>Template pesan susulan. Variabel: {nama}, {namaRS}, {tanggalKontrol}, {dokter}, {poli}, {kasus}, {kontakCS}, {kontakIGD}</label>
+        <textarea id="templateSusulanInput" style="min-height:120px;"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="simpanSetelanTindak()">Simpan Penandaan &amp; Tindak Lanjut</button>
+        <div class="msg" id="tindakSettingMsg"></div>
+        <div style="margin-top:14px; padding:12px; border:1px dashed var(--line); border-radius:8px; font-size:13px;">
+          <strong>Pengingat otomatis harian:</strong> <span id="pemicuStatus" class="badge Pending">memeriksa...</span>
+          <div class="hint">Agar pengingat H-3/H-1 (dan susulan bila diaktifkan) terkirim sendiri tiap pagi sekitar pukul 07.00 WIB, jalankan fungsi <code>pasangPemicuHarian</code> sekali dari editor Apps Script (pilih fungsi → Run → izinkan akses). Untuk menghentikan, jalankan <code>hapusPemicuHarian</code>.</div>
+        </div>
+      </div>
+
+      <div class="card">
         <h3>Kunci AI (Anthropic) <span class="badge Terkirim" style="text-transform:none; letter-spacing:0; margin-left:6px;">🔒 Terkunci</span></h3>
         <p class="hint" style="margin-top:0;">Dipakai untuk fitur Unggah Berkas AI dan Tanya Jawab AI. API key dikunci dan hanya dapat diubah dengan PIN Pemilik. Dapatkan key di console.anthropic.com</p>
         <label>Anthropic API Key</label>
@@ -768,6 +943,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <div class="msg" id="anthropicKeyMsg"></div>
       </div>
     </div>
+  </div>
+  </main>
   </div>
 </div>
 
@@ -805,6 +982,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         document.getElementById('mainView').style.display = 'block';
         refreshData();
         refreshJenisOptions();
+        muatDaftarKasus(); refreshKontrolData();
       } else {
         showMsg('loginMsg', data.error || 'PIN salah.', false);
       }
@@ -818,15 +996,38 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     location.reload();
   }
 
+  const JUDUL_TAB = {
+    scan:['Scan Pasien','Scan barcode / ketik No. RM untuk mengirim ucapan dan survei'],
+    tambah:['Tambah Manual','Tambahkan pasien secara manual atau massal ke antrian'],
+    antrian:['Antrian Kirim','Pantau dan proses pengiriman WhatsApp'],
+    master:['Data Master','Daftar pasien tersimpan (No. RM, nama, No. HP) dan penjadwalan kontrol'],
+    kontrol:['Kontrol Pasien','Skrining jadwal kontrol berdasarkan tanggal, dokter, dan kasus'],
+    tindak:['Tindak Lanjut','Daftar kerja harian: diingatkan, hari ini, dan terlewat'],
+    dashboard:['Dashboard','Kepatuhan kontrol per dokter dan per kasus'],
+    unggah:['Unggah Berkas (AI)','Ekstrak data pasien dari file dengan bantuan AI'],
+    ai:['Tanya Jawab AI','Jawaban otomatis WhatsApp untuk pertanyaan pasien'],
+    sosialisasi:['Sosialisasi','QR, poster, dan kartu meja untuk masyarakat'],
+    pengaturan:['Pengaturan','Template pesan, kontak, dan kunci sistem']
+  };
+
+  function toggleMenu(buka){
+    const side = document.getElementById('sideMenu'), ov = document.getElementById('menuOverlay');
+    const ya = (typeof buka === 'boolean') ? buka : !side.classList.contains('open');
+    side.classList.toggle('open', ya); ov.classList.toggle('show', ya);
+  }
+
   function switchTab(name){
+    const jt = JUDUL_TAB[name];
+    if(jt){ document.getElementById('pageTitle').textContent = jt[0]; document.getElementById('pageSub').textContent = jt[1]; }
+    toggleMenu(false);
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    ['scan','tambah','antrian','master','kontrol','unggah','ai','sosialisasi','pengaturan'].forEach(t => {
+    ['scan','tambah','antrian','master','kontrol','tindak','dashboard','unggah','ai','sosialisasi','pengaturan'].forEach(t => {
       document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
     });
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
     if(name === 'pengaturan') muatPengaturan();
-    if(name === 'kontrol'){ muatDaftarKasus(); refreshKontrolData(); }
+    if(name === 'kontrol' || name === 'tindak' || name === 'dashboard'){ muatDaftarKasus(); refreshKontrolData(); }
     if(name === 'master'){ muatMaster(); muatDaftarKasus(); }
     if(name === 'ai') muatAI();
     if(name === 'sosialisasi') muatSosialisasi();
@@ -1176,6 +1377,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       document.getElementById('daftarKasusInput').value = data.daftarKasus || '';
       document.getElementById('pesanKasusInput').value = data.pesanKasus || '';
       setDaftarKasus(data.daftarKasus);
+      terapkanSetelan(data);
+      isiSetelanTindak(data);
       document.getElementById('anthropicKeyInput').value = data.anthropicApiKeyMasked || '(belum diisi)';
       pemilikBelumAda = (data.pinPemilikAda === false);
       document.getElementById('anthropicModelInput').value = data.anthropicModel || 'claude-sonnet-4-6';
@@ -1441,7 +1644,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       kontrolData = list;
       kontrolDipilih.forEach(id => { if(!list.some(k => k.id === id)) kontrolDipilih.delete(id); });
       isiDropdownSkrin(); ringkasKelompok();
-      renderKontrol();
+      renderKontrol(); renderTindak(); renderDashboard();
     } catch(err){
       console.error(err);
       showMsg('skrinMsg', 'Gagal memuat jadwal kontrol: ' + (err.message || err), false);
@@ -1474,6 +1677,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     const poli = document.getElementById('skrinPoli').value.trim().toLowerCase();
     const dokter = document.getElementById('skrinDokter').value;
     const kasus = document.getElementById('skrinKasus').value;
+    const waktu = document.getElementById('skrinWaktu').value;
     const status = document.getElementById('skrinStatus').value;
     const cari = document.getElementById('skrinCari').value.trim().toLowerCase();
     return kontrolData.filter(k => {
@@ -1487,6 +1691,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       if(status === 'belum' && sudah) return false;
       if(status === 'sudah' && !sudah) return false;
       if(cari && !(`${k.nama} ${k.noRM || ''} ${k.noHp}`.toLowerCase().includes(cari))) return false;
+      if(waktu){ const w = statusWaktu(k).kode; if(waktu === 'perlu' ? !(w === 'segera' || w === 'hariini') : w !== waktu) return false; }
       return true;
     }).sort((a, b) => String(a.tanggalKontrol).localeCompare(String(b.tanggalKontrol)));
   }
@@ -1499,6 +1704,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     list.forEach(k => {
       const tr = document.createElement('tr');
       const rem = String(k.reminderTerkirim || '').trim();
+      const sw = statusWaktu(k);
+      tr.className = 'r-' + sw.kode;
       tr.innerHTML = `
         <td><input type="checkbox" class="skrin-check" data-id="${escapeHtml(k.id)}" ${kontrolDipilih.has(k.id) ? 'checked' : ''} style="width:auto;"></td>
         <td>${escapeHtml(k.nama)}<div class="hint" style="margin:0;">${escapeHtml(k.noRM || '')}</div></td>
@@ -1506,6 +1713,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <td>${escapeHtml(k.tanggalKontrol)}</td>
         <td>${escapeHtml(k.dokter)} / ${escapeHtml(k.poli)}</td>
         <td>${k.kasus ? '<span class="badge Pending">' + escapeHtml(k.kasus) + '</span>' : '<span class="hint">-</span>'}</td>
+        <td><span class="badge ${sw.cls}">${escapeHtml(sw.label)}</span></td>
         <td>${rem ? '<span class="badge Terkirim">' + escapeHtml(rem) + '</span>' : '<span class="badge Pending">belum</span>'}</td>
         <td><button class="ghost" onclick="hapusKontrol('${escapeHtml(k.id)}')">Hapus</button></td>`;
       tr.querySelector('.skrin-check').addEventListener('change', e => {
@@ -1522,7 +1730,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     if(kasusDimuat) return;
     try{
       const r = await (await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`)).json();
-      if(r && !r.error){ kasusDimuat = true; setDaftarKasus(r.daftarKasus); isiDropdownSkrin(); }
+      if(r && !r.error){ kasusDimuat = true; setDaftarKasus(r.daftarKasus); terapkanSetelan(r); isiDropdownSkrin(); renderKontrol(); renderTindak(); }
     } catch(e){ /* daftar kasus opsional */ }
   }
   function setDaftarKasus(teks){
@@ -1585,40 +1793,283 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     renderKontrol();
   }
 
-  async function kirimTerpilih(){
-    const terpilih = kontrolTersaring().filter(k => kontrolDipilih.has(k.id));
-    if(terpilih.length === 0){ showMsg('skrinMsg', 'Belum ada pasien yang dicentang.', false); return; }
-    const sudah = terpilih.filter(k => String(k.reminderTerkirim || '').includes('M')).length;
-    const lewat = terpilih.filter(k => String(k.tanggalKontrol).slice(0, 10) < isoHariIni()).length;
-    let tanya = `Kirim pengingat WhatsApp ke ${terpilih.length} pasien?\n\nIsi pesan mengikuti template di tab Pengaturan.\nPerkiraan waktu: ${Math.ceil(terpilih.length * 3.5 / 60)} menit (ada jeda antar pesan agar nomor tidak diblokir).`;
-    if(lewat) tanya += `\n\nPerhatian: ${lewat} pasien tanggal kontrolnya sudah lewat.`;
+  // ---------- Penandaan waktu otomatis ----------
+  let setelan = { ambangSegera: 7, intervalKontrol: 30, intervalKasus: {} };
+
+  function terapkanSetelan(d){
+    if(!d) return;
+    const n = parseInt(d.ambangSegera, 10); if(n > 0) setelan.ambangSegera = n;
+    const iv = parseInt(d.intervalKontrol, 10); if(iv > 0) setelan.intervalKontrol = iv;
+    const peta = {};
+    String(d.intervalKasus || '').split('\n').forEach(b => {
+      const p = b.indexOf('='); if(p < 1) return;
+      const v = parseInt(b.slice(p + 1), 10); if(v > 0) peta[b.slice(0, p).trim().toLowerCase()] = v;
+    });
+    setelan.intervalKasus = peta;
+  }
+
+  function selisihHari(iso){
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return NaN;
+    const t = new Date(+m[1], +m[2] - 1, +m[3]);
+    const n = new Date(); n.setHours(0, 0, 0, 0);
+    return Math.round((t - n) / 86400000);
+  }
+
+  function tambahHari(iso, n){
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const d = m ? new Date(+m[1], +m[2] - 1, +m[3] + n) : new Date();
+    const p = x => String(x).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  function statusWaktu(k){
+    const st = String(k.status || '');
+    if(st === 'Datang') return { kode:'selesai', label:'Sudah datang', cls:'w-hijau' };
+    if(st === 'Jadwal ulang') return { kode:'selesai', label:'Dijadwal ulang', cls:'w-biru' };
+    const d = selisihHari(k.tanggalKontrol);
+    if(isNaN(d)) return { kode:'abu', label:'-', cls:'w-abu' };
+    if(st === 'Tidak datang') return { kode:'terlewat', label:'Tidak datang', cls:'w-merah', d };
+    if(d < 0) return { kode:'terlewat', label:`Terlewat ${-d} hari`, cls:'w-merah', d };
+    if(d === 0) return { kode:'hariini', label:'Hari ini', cls:'w-oranye', d };
+    if(d === 1) return { kode:'hariini', label:'Besok', cls:'w-oranye', d };
+    if(d <= setelan.ambangSegera) return { kode:'segera', label:`H-${d} · segera`, cls:'w-kuning', d };
+    return { kode:'jauh', label:`H-${d}`, cls:'w-abu', d };
+  }
+
+  function intervalUntuk(kasus){
+    return setelan.intervalKasus[String(kasus || '').trim().toLowerCase()] || setelan.intervalKontrol;
+  }
+
+  // ---------- Status kehadiran ----------
+  async function tandaiStatus(daftar, status, msgId){
+    if(!daftar.length){ showMsg(msgId, 'Belum ada pasien yang dipilih.', false); return; }
+    let tglBaru = null;
+    if(status === 'Jadwal ulang'){
+      tglBaru = prompt(`Tanggal kontrol baru untuk ${daftar.length} pasien (format YYYY-MM-DD):`, tambahHari(isoHariIni(), 7));
+      if(tglBaru === null) return;
+      tglBaru = tglBaru.trim();
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(tglBaru)){ showMsg(msgId, 'Format tanggal harus YYYY-MM-DD.', false); return; }
+    } else if(!confirm(status ? `Tandai ${daftar.length} pasien sebagai "${status}"?` : `Hapus tanda status untuk ${daftar.length} pasien?`)) return;
+    try{
+      const ids = daftar.map(k => k.id);
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'ubahStatusJadwal', pin: PIN, ids, status }) });
+      const r = await res.json();
+      if(!r.success){ showMsg(msgId, r.error || 'Gagal menyimpan status.', false); return; }
+      let pesan = `${r.updated} pasien ditandai "${status || '(tanpa tanda)'}".`;
+      let items = null;
+      if(status === 'Jadwal ulang'){
+        items = daftar.map(k => ({ id: k.id, tanggal: tglBaru }));
+      } else if(status === 'Datang' && confirm(`Jadwalkan kontrol berikutnya untuk ${daftar.length} pasien?\n\nTanggal = tanggal kontrol + interval (standar ${setelan.intervalKontrol} hari; per kasus bisa diatur di Pengaturan).\n\nContoh:\n` + daftar.slice(0, 3).map(k => `• ${k.nama}: ${tambahHari(k.tanggalKontrol, intervalUntuk(k.kasus))}`).join('\n'))){
+        items = daftar.map(k => ({ id: k.id, tanggal: tambahHari(k.tanggalKontrol, intervalUntuk(k.kasus)) }));
+      }
+      if(items){
+        const r2 = await (await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'buatJadwalBerikutnya', pin: PIN, items }) })).json();
+        pesan += r2.success ? ` ${r2.added} jadwal baru dibuat` + (r2.skipped ? ` (${r2.skipped} dilewati karena sudah ada).` : '.') : ' Jadwal baru gagal dibuat: ' + (r2.error || '');
+      }
+      showMsg(msgId, pesan, true);
+      daftar.forEach(k => kontrolDipilih.delete(k.id));
+      await refreshKontrolData();
+    } catch(err){ showMsg(msgId, 'Gagal menyimpan (tidak terhubung ke server).', false); }
+  }
+
+  function tandaiTerpilih(status){
+    tandaiStatus(kontrolTersaring().filter(k => kontrolDipilih.has(k.id)), status, 'skrinMsg');
+  }
+  function tandaiSatu(id, status){
+    const k = kontrolData.find(x => x.id === id); if(k) tandaiStatus([k], status, 'tindakMsg');
+  }
+
+  // ---------- Kirim pengingat / susulan ----------
+  async function kirimKe(terpilih, jenis, msgId, btn){
+    if(terpilih.length === 0){ showMsg(msgId, 'Belum ada pasien yang dicentang.', false); return; }
+    const tanda = jenis === 'susulan' ? 'S' : 'M';
+    const sudah = terpilih.filter(k => String(k.reminderTerkirim || '').split(',').map(x => x.trim()).includes(tanda)).length;
+    const lewat = terpilih.filter(k => selisihHari(k.tanggalKontrol) < 0).length;
+    let tanya = jenis === 'susulan'
+      ? `Kirim pesan SUSULAN WhatsApp ke ${terpilih.length} pasien?\n\nIsi pesan mengikuti template susulan di tab Pengaturan.`
+      : `Kirim pengingat WhatsApp ke ${terpilih.length} pasien?\n\nIsi pesan mengikuti template di tab Pengaturan.`;
+    tanya += `\nPerkiraan waktu: ${Math.ceil(terpilih.length * 3.5 / 60)} menit (ada jeda antar pesan agar nomor tidak diblokir).`;
+    if(jenis !== 'susulan' && lewat) tanya += `\n\nPerhatian: ${lewat} pasien tanggal kontrolnya sudah lewat.`;
     let ulang = false;
-    if(sudah){
-      ulang = confirm(`${sudah} pasien sudah pernah dikirimi pengingat manual.\n\nOK = kirim ulang juga ke mereka\nBatal = lewati yang sudah dikirimi`);
-    }
+    if(sudah) ulang = confirm(`${sudah} pasien sudah pernah dikirimi pesan jenis ini.\n\nOK = kirim ulang juga ke mereka\nBatal = lewati yang sudah dikirimi`);
     if(!confirm(tanya)) return;
 
-    const btn = document.getElementById('btnKirimTerpilih');
+    const teksAwal = btn.textContent;
     btn.disabled = true;
     let sent = 0, failed = 0, skipped = 0; const gagal = [];
     try{
       for(let i = 0; i < terpilih.length; i += 10){
         const kelompok = terpilih.slice(i, i + 10).map(k => k.id);
         btn.textContent = `Mengirim ${Math.min(i + 10, terpilih.length)} / ${terpilih.length}...`;
-        const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'kirimReminderTerpilih', pin: PIN, ids: kelompok, ulang }) });
+        const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'kirimReminderTerpilih', pin: PIN, ids: kelompok, ulang, jenis }) });
         const r = await res.json();
-        if(!r.success){ showMsg('skrinMsg', r.error || 'Pengiriman dihentikan karena kesalahan.', false); break; }
+        if(!r.success){ showMsg(msgId, r.error || 'Pengiriman dihentikan karena kesalahan.', false); break; }
         sent += r.sent; failed += r.failed; skipped += r.skipped; (r.gagal || []).forEach(n => gagal.push(n));
       }
-      showMsg('skrinMsg', `Selesai: ${sent} terkirim, ${failed} gagal, ${skipped} dilewati (sudah pernah).` + (gagal.length ? ' Gagal: ' + gagal.join(', ') : ''), failed === 0);
-      kontrolDipilih.clear();
+      showMsg(msgId, `Selesai: ${sent} terkirim, ${failed} gagal, ${skipped} dilewati (sudah pernah / sudah datang).` + (gagal.length ? ' Gagal: ' + gagal.join(', ') : ''), failed === 0);
+      terpilih.forEach(k => kontrolDipilih.delete(k.id));
       await refreshKontrolData();
     } catch(err){
-      showMsg('skrinMsg', 'Terputus di tengah pengiriman. Cek kolom Reminder untuk melihat yang sudah terkirim.', false);
+      showMsg(msgId, 'Terputus di tengah pengiriman. Cek kolom Reminder untuk melihat yang sudah terkirim.', false);
       await refreshKontrolData();
     } finally {
-      btn.disabled = false; btn.textContent = 'Kirim Pengingat ke yang Dicentang';
+      btn.disabled = false; btn.textContent = teksAwal;
     }
+  }
+
+  function kirimTerpilih(){
+    kirimKe(kontrolTersaring().filter(k => kontrolDipilih.has(k.id)), 'pengingat', 'skrinMsg', document.getElementById('btnKirimTerpilih'));
+  }
+
+  // ---------- Tab Tindak Lanjut ----------
+  function seksiTindak(){
+    const A = [], B = [], C = [];
+    let selesaiBulan = 0;
+    const bln = isoHariIni().slice(0, 7);
+    kontrolData.forEach(k => {
+      const w = statusWaktu(k);
+      if(w.kode === 'terlewat') C.push(k);
+      if(w.kode === 'hariini') B.push(k);
+      if((w.kode === 'segera' || w.kode === 'hariini') && !String(k.reminderTerkirim || '').trim()) A.push(k);
+      if(k.status === 'Datang' && String(k.tglStatus || '').slice(0, 7) === bln) selesaiBulan++;
+    });
+    const urut = (x, y) => String(x.tanggalKontrol).localeCompare(String(y.tanggalKontrol));
+    return { A: A.sort(urut), B: B.sort(urut), C: C.sort((x, y) => urut(y, x)), selesaiBulan };
+  }
+
+  function tombolStatus(id){
+    const e = escapeHtml(id);
+    return `<button class="secondary btn-mini" onclick="tandaiSatu('${e}','Datang')">Datang</button>
+      <button class="secondary btn-mini" onclick="tandaiSatu('${e}','Jadwal ulang')">Jadwal ulang</button>
+      <button class="ghost btn-mini" onclick="tandaiSatu('${e}','Tidak datang')">Tdk datang</button>`;
+  }
+
+  function isiSeksi(kode, list, denganCek){
+    const body = document.getElementById('body' + kode);
+    body.innerHTML = '';
+    document.getElementById('empty' + kode).style.display = list.length ? 'none' : 'block';
+    document.getElementById('cnt' + kode).textContent = `(${list.length})`;
+    list.forEach(k => {
+      const sw = statusWaktu(k);
+      const tr = document.createElement('tr');
+      tr.className = 'r-' + sw.kode;
+      const adaS = String(k.reminderTerkirim || '').split(',').map(x => x.trim()).includes('S');
+      tr.innerHTML = (denganCek ? `<td><input type="checkbox" ${kontrolDipilih.has(k.id) ? 'checked' : ''} style="width:auto;"></td>` : '') + `
+        <td>${escapeHtml(k.nama)}<div class="hint" style="margin:0;">${escapeHtml(k.noRM || '')}</div></td>
+        <td>${escapeHtml(k.noHp)}</td><td>${escapeHtml(k.tanggalKontrol)}</td>
+        <td>${escapeHtml(k.dokter)} / ${escapeHtml(k.poli)}</td>
+        <td>${k.kasus ? '<span class="badge Pending">' + escapeHtml(k.kasus) + '</span>' : '<span class="hint">-</span>'}</td>
+        <td><span class="badge ${sw.cls}">${escapeHtml(sw.label)}</span></td>` +
+        (kode === 'C' ? `<td>${adaS ? '<span class="badge Terkirim">terkirim</span>' : '<span class="badge Pending">belum</span>'}</td>` : '') +
+        `<td>${tombolStatus(k.id)}</td>`;
+      if(denganCek) tr.querySelector('input').addEventListener('change', e => {
+        if(e.target.checked) kontrolDipilih.add(k.id); else kontrolDipilih.delete(k.id);
+      });
+      body.appendChild(tr);
+    });
+  }
+
+  function renderTindak(){
+    const g = seksiTindak();
+    document.getElementById('tileDiingatkan').textContent = g.A.length;
+    document.getElementById('tileHariIni').textContent = g.B.length;
+    document.getElementById('tileTerlewat').textContent = g.C.length;
+    document.getElementById('tileSelesai').textContent = g.selesaiBulan;
+    const perlu = g.A.length + g.C.length;
+    const lbl = document.getElementById('tabTindakBadge');
+    if(lbl){ lbl.textContent = perlu; lbl.style.display = perlu ? 'inline-block' : 'none'; }
+    isiSeksi('A', g.A, true); isiSeksi('B', g.B, false); isiSeksi('C', g.C, true);
+  }
+
+  function pilihSeksi(kode, ya){
+    seksiTindak()[kode].forEach(k => { if(ya) kontrolDipilih.add(k.id); else kontrolDipilih.delete(k.id); });
+    renderTindak();
+  }
+
+  function kirimSeksi(kode){
+    const list = seksiTindak()[kode].filter(k => kontrolDipilih.has(k.id));
+    kirimKe(list, kode === 'C' ? 'susulan' : 'pengingat', 'tindakMsg', document.getElementById('btnKirim' + kode));
+  }
+
+  // ---------- Dashboard ----------
+  function rentangDash(jenis){
+    const dari = document.getElementById('dashDari'), sampai = document.getElementById('dashSampai');
+    if(jenis === 'bulan'){ dari.value = isoHariIni().slice(0, 8) + '01'; sampai.value = isoHariIni(-1); }
+    else { dari.value = isoHariIni(-jenis); sampai.value = isoHariIni(-1); }
+    renderDashboard();
+  }
+
+  function renderDashboard(){
+    const dEl = document.getElementById('dashDari'), sEl = document.getElementById('dashSampai');
+    if(!dEl.value && !sEl.value){ dEl.value = isoHariIni(-30); sEl.value = isoHariIni(-1); }
+    const dari = dEl.value, sampai = sEl.value, hari = isoHariIni();
+    const rows = kontrolData.filter(k => {
+      const t = String(k.tanggalKontrol || '').slice(0, 10);
+      return t && t < hari && (!dari || t >= dari) && (!sampai || t <= sampai);
+    });
+    const hitung = (list) => {
+      const h = { total: list.length, datang: 0, ulang: 0, tidak: 0, belum: 0 };
+      list.forEach(k => { if(k.status === 'Datang') h.datang++; else if(k.status === 'Jadwal ulang') h.ulang++; else if(k.status === 'Tidak datang') h.tidak++; else h.belum++; });
+      h.persen = h.total ? Math.round(h.datang * 100 / h.total) : 0;
+      return h;
+    };
+    const t = hitung(rows);
+    document.getElementById('dTotal').textContent = t.total; document.getElementById('dDatang').textContent = t.datang;
+    document.getElementById('dUlang').textContent = t.ulang; document.getElementById('dTidak').textContent = t.tidak;
+    document.getElementById('dBelum').textContent = t.belum; document.getElementById('dPersen').textContent = t.persen + '%';
+    const tabel = (id, fn, kosong) => {
+      const grup = {}; rows.forEach(k => { const key = fn(k) || kosong; (grup[key] = grup[key] || []).push(k); });
+      const body = document.getElementById(id); body.innerHTML = '';
+      const keys = Object.keys(grup).sort();
+      if(!keys.length){ body.innerHTML = '<tr><td colspan="7" class="hint">Belum ada data pada periode ini.</td></tr>'; return; }
+      keys.forEach(key => {
+        const h = hitung(grup[key]);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(key)}</td><td>${h.total}</td><td>${h.datang}</td><td>${h.ulang}</td><td>${h.tidak}</td><td>${h.belum}</td>
+          <td><div style="display:flex; align-items:center; gap:8px;"><div class="bar" style="flex:1;"><i style="width:${h.persen}%"></i></div><strong style="font-size:12px;">${h.persen}%</strong></div></td>`;
+        body.appendChild(tr);
+      });
+    };
+    tabel('dashDokter', k => String(k.dokter || '').trim(), '(tanpa dokter)');
+    tabel('dashKasus', k => String(k.kasus || '').trim(), '(belum ada kasus)');
+  }
+
+  // ---------- Ekspor & cetak daftar hasil skrining ----------
+  function ringkasFilterTeks(){
+    const v = id => document.getElementById(id).value;
+    const bagian = [];
+    if(v('skrinDari') || v('skrinSampai')) bagian.push(`Tanggal ${v('skrinDari') || '...'} s/d ${v('skrinSampai') || '...'}`);
+    if(v('skrinDokter')) bagian.push('Dokter: ' + v('skrinDokter'));
+    if(v('skrinKasus')) bagian.push('Kasus: ' + (v('skrinKasus') === '__kosong__' ? '(belum ada)' : v('skrinKasus')));
+    if(v('skrinPoli')) bagian.push('Poli: ' + v('skrinPoli'));
+    return bagian.join(' · ') || 'Semua jadwal';
+  }
+
+  function unduhCSV(){
+    const list = kontrolTersaring();
+    if(!list.length){ showMsg('skrinMsg', 'Tidak ada data untuk diunduh.', false); return; }
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const teks = v => '="' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const baris = [['No. RM','Nama','No. HP','Tanggal Kontrol','Dokter','Poli','Kasus','Status Waktu','Kehadiran','Pengingat'].map(q).join(',')];
+    list.forEach(k => baris.push([teks(k.noRM), q(k.nama), teks(k.noHp), q(k.tanggalKontrol), q(k.dokter), q(k.poli), q(k.kasus), q(statusWaktu(k).label), q(k.status), q(k.reminderTerkirim)].join(',')));
+    const blob = new Blob(['﻿' + baris.join('\r\n')], { type:'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `jadwal-kontrol-${isoHariIni()}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    showMsg('skrinMsg', `${list.length} baris diunduh. Buka dengan Excel.`, true);
+  }
+
+  function cetakDaftar(){
+    const list = kontrolTersaring();
+    if(!list.length){ showMsg('skrinMsg', 'Tidak ada data untuk dicetak.', false); return; }
+    let st = document.getElementById('sosPageStyle');
+    if(!st){ st = document.createElement('style'); st.id = 'sosPageStyle'; document.head.appendChild(st); }
+    st.textContent = '@page{ size:A4 landscape; margin:12mm; }';
+    const baris = list.map((k, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(k.nama)}</td><td>${escapeHtml(k.noRM || '')}</td><td>${escapeHtml(k.noHp)}</td><td>${escapeHtml(k.tanggalKontrol)}</td><td>${escapeHtml(k.dokter)} / ${escapeHtml(k.poli)}</td><td>${escapeHtml(k.kasus || '')}</td><td>${escapeHtml(statusWaktu(k).label)}</td></tr>`).join('');
+    document.getElementById('printOnly').innerHTML = `<div class="listcetak"><h2>Daftar Pasien Kontrol</h2><p>${escapeHtml(ringkasFilterTeks())} · ${list.length} pasien · dicetak ${escapeHtml(isoHariIni())}</p>
+      <table><thead><tr><th>No</th><th>Nama</th><th>No. RM</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter / Poli</th><th>Kasus</th><th>Status</th></tr></thead><tbody>${baris}</tbody></table></div>`;
+    window.print();
   }
 
   async function hapusKontrol(id){
@@ -1640,6 +2091,37 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     } finally {
       btn.disabled = false; btn.textContent = 'Cek & Kirim Reminder Sekarang';
     }
+  }
+
+  function isiSetelanTindak(d){
+    document.getElementById('ambangSegeraInput').value = d.ambangSegera || '7';
+    document.getElementById('intervalKontrolInput').value = d.intervalKontrol || '30';
+    document.getElementById('intervalKasusInput').value = d.intervalKasus || '';
+    document.getElementById('susulanOtomatisSelect').value = String(d.susulanOtomatis || 'OFF').toUpperCase() === 'ON' ? 'ON' : 'OFF';
+    document.getElementById('templateSusulanInput').value = d.templateSusulan || '';
+    const el = document.getElementById('pemicuStatus');
+    if(d.pemicuHarianAktif === true){ el.className = 'badge Terkirim'; el.textContent = 'Aktif'; }
+    else if(d.pemicuHarianAktif === false){ el.className = 'badge Gagal'; el.textContent = 'Belum dipasang'; }
+    else { el.className = 'badge Pending'; el.textContent = 'Tidak bisa dicek'; }
+  }
+
+  async function simpanSetelanTindak(){
+    const nilai = {
+      AmbangSegera: String(parseInt(document.getElementById('ambangSegeraInput').value, 10) || 7),
+      IntervalKontrol: String(parseInt(document.getElementById('intervalKontrolInput').value, 10) || 30),
+      IntervalKasus: document.getElementById('intervalKasusInput').value.trim(),
+      SusulanOtomatis: document.getElementById('susulanOtomatisSelect').value,
+      TemplateSusulan: document.getElementById('templateSusulanInput').value.trim()
+    };
+    try{
+      for(const key of Object.keys(nilai)){
+        const r = await (await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key, value: nilai[key] }) })).json();
+        if(!r.success) throw new Error(r.error || 'ditolak');
+      }
+      terapkanSetelan({ ambangSegera: nilai.AmbangSegera, intervalKontrol: nilai.IntervalKontrol, intervalKasus: nilai.IntervalKasus });
+      renderKontrol(); renderTindak();
+      showMsg('tindakSettingMsg', 'Tersimpan.', true);
+    } catch(err){ showMsg('tindakSettingMsg', 'Gagal menyimpan: ' + (err.message || err), false); }
   }
 
   async function simpanPengaturanKontrol(){
