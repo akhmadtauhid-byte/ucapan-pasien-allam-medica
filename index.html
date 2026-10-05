@@ -8,55 +8,55 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --ink:#1c2a24; --paper:#f6f4ee; --panel:#ffffff; --line:#dcd6c6;
-    --teal:#2d5a4f; --teal-dark:#1e3d35; --clay:#b5643f;
-    --ok:#2d5a4f; --warn:#b5643f; --pending:#8a7f5c; --radius:10px;
+    --ink:#3a1f2b; --paper:#fff4f8; --panel:#ffffff; --line:#f2cfdc;
+    --teal:#d6336c; --teal-dark:#a61e4d; --clay:#c2255c; /* nama variabel lama, nilainya kini pink */
+    --ok:#2b8a3e; --warn:#c92a2a; --pending:#a5681a; --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--paper); color:var(--ink); min-height:100vh;}
-  .topbar{background:var(--teal-dark); color:#f6f4ee; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  .topbar{background:var(--teal-dark); color:#fff0f5; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;}
   .topbar h1{font-size:17px; margin:0; font-weight:600;}
   .topbar .sub{font-size:12px; opacity:.7; margin-top:2px;}
   .wrap{max-width:760px; margin:0 auto; padding:20px 16px 60px;}
   #loginView{max-width:340px; margin:80px auto; padding:0 16px;}
   #loginView .card{padding:28px 24px;}
   #loginView h2{margin:0 0 4px; font-size:18px;}
-  #loginView p{color:#6b6355; font-size:13px; margin:0 0 20px;}
+  #loginView p{color:#8a5a6e; font-size:13px; margin:0 0 20px;}
   .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
-  .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#6b6355;}
+  .card h3{margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:#8a5a6e;}
   input, select, textarea{width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; font-family:inherit; background:#fff; color:var(--ink);}
   input:focus, select:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
-  label{font-size:12px; color:#6b6355; display:block; margin-bottom:4px; margin-top:10px;}
+  label{font-size:12px; color:#8a5a6e; display:block; margin-bottom:4px; margin-top:10px;}
   label:first-child{margin-top:0;}
   textarea{min-height:90px; font-family:ui-monospace,monospace; font-size:13px; line-height:1.5;}
   button{background:var(--teal); color:#fff; border:none; border-radius:7px; padding:11px 18px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit;}
   button:hover{background:var(--teal-dark);}
-  button:disabled{background:#a8a49a; cursor:not-allowed;}
+  button:disabled{background:#d3b5c3; cursor:not-allowed;}
   button.secondary{background:transparent; color:var(--teal); border:1px solid var(--teal);}
-  button.secondary:hover{background:#eef2f0;}
+  button.secondary:hover{background:#fde8ef;}
   button.ghost{background:transparent; color:var(--clay); border:1px solid var(--clay); padding:6px 10px; font-size:12px; font-weight:500;}
   .row{display:flex; gap:10px; flex-wrap:wrap;}
   .row > *{flex:1; min-width:140px;}
   .tabs{display:flex; gap:2px; margin-bottom:16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
-  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#8a8574; border-bottom:2px solid transparent;}
+  .tab{padding:10px 16px; cursor:pointer; font-size:13px; font-weight:600; color:#a07a8c; border-bottom:2px solid transparent;}
   .tab.active{color:var(--teal-dark); border-bottom-color:var(--teal);}
   .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px;}
   .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center;}
   .stat .num{font-size:22px; font-weight:700; color:var(--teal-dark);}
-  .stat .lbl{font-size:11px; color:#8a8574; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+  .stat .lbl{font-size:11px; color:#a07a8c; text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
   table{width:100%; border-collapse:collapse; font-size:13px;}
-  th{text-align:left; font-size:11px; text-transform:uppercase; color:#8a8574; padding:6px 8px; border-bottom:1px solid var(--line);}
-  td{padding:8px; border-bottom:1px solid #eeeae0; vertical-align:top;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; color:#a07a8c; padding:6px 8px; border-bottom:1px solid var(--line);}
+  td{padding:8px; border-bottom:1px solid #f8e3ec; vertical-align:top;}
   .badge{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11px; font-weight:600;}
-  .badge.Terkirim{background:#e3ede9; color:var(--ok);}
-  .badge.Gagal{background:#f3e2da; color:var(--warn);}
-  .badge.Pending{background:#f1eee0; color:var(--pending);}
+  .badge.Terkirim{background:#e3f4e7; color:var(--ok);}
+  .badge.Gagal{background:#fde4e4; color:var(--warn);}
+  .badge.Pending{background:#fff1d9; color:var(--pending);}
   .msg{font-size:13px; padding:10px 12px; border-radius:7px; margin-bottom:12px; display:none;}
   .msg.show{display:block;}
-  .msg.ok{background:#e3ede9; color:var(--teal-dark);}
-  .msg.err{background:#f3e2da; color:#8a3a1f;}
-  .hint{font-size:12px; color:#8a8574; margin-top:6px; line-height:1.5;}
-  .empty{text-align:center; padding:30px 10px; color:#8a8574; font-size:13px;}
+  .msg.ok{background:#e3f4e7; color:#1e5e2e;}
+  .msg.err{background:#fde4e4; color:#8a1c1c;}
+  .hint{font-size:12px; color:#a07a8c; margin-top:6px; line-height:1.5;}
+  .empty{text-align:center; padding:30px 10px; color:#a07a8c; font-size:13px;}
 </style>
 </head>
 <body>
@@ -78,7 +78,7 @@
       <h1>Ucapan &amp; Survei Kepuasan Pasien</h1>
       <div class="sub">RSU Allam Medica</div>
     </div>
-    <button class="secondary" style="color:#f6f4ee; border-color:#f6f4ee;" onclick="logout()">Keluar</button>
+    <button class="secondary" style="color:#fff0f5; border-color:#fff0f5;" onclick="logout()">Keluar</button>
   </div>
 
   <div class="wrap">
@@ -233,7 +233,7 @@
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahDariScan()">Tambah ke Antrian</button>
 
-        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eeeae0;">
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f8e3ec;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
             <input type="checkbox" id="kontrolCheckboxScan" onchange="toggleKontrolInline('scan')" style="width:auto;">
             Pasien ini juga perlu kontrol ulang
@@ -287,7 +287,7 @@
         </div>
         <button style="width:100%; margin-top:14px;" onclick="tambahSatu()">Tambah ke Antrian</button>
 
-        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eeeae0;">
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #f8e3ec;">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--ink);">
             <input type="checkbox" id="kontrolCheckbox" onchange="toggleKontrolInline('tambah')" style="width:auto;">
             Pasien ini juga perlu kontrol ulang
@@ -879,7 +879,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
           const div = document.createElement('div');
           div.style.marginBottom = '16px';
           div.style.paddingBottom = '16px';
-          div.style.borderBottom = '1px solid #eeeae0';
+          div.style.borderBottom = '1px solid #f8e3ec';
           div.innerHTML = `
             <label>Jenis: <strong>${escapeHtml(t.jenis)}</strong></label>
             <textarea style="min-height:110px;" data-jenis="${escapeHtml(t.jenis)}">${escapeHtml(t.template)}</textarea>
@@ -1321,7 +1321,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       }
       list.forEach(k => {
         const div = document.createElement('div');
-        div.style.cssText = 'margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #eeeae0;';
+        div.style.cssText = 'margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #f8e3ec;';
         div.innerHTML = `
           <input type="text" data-kbtopik="${escapeHtml(k.id)}" value="${escapeHtml(k.topik)}" style="font-weight:600;">
           <textarea data-kbisi="${escapeHtml(k.id)}" style="min-height:90px; margin-top:6px;">${escapeHtml(k.isi)}</textarea>
