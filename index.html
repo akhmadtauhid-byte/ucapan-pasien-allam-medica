@@ -96,6 +96,7 @@
       <div class="tab" data-tab="master" onclick="switchTab('master')">Data Master</div>
       <div class="tab" data-tab="kontrol" onclick="switchTab('kontrol')">Kontrol Pasien</div>
       <div class="tab" data-tab="unggah" onclick="switchTab('unggah')">Unggah Berkas (AI)</div>
+      <div class="tab" data-tab="ai" onclick="switchTab('ai')">Tanya Jawab AI</div>
       <div class="tab" data-tab="pengaturan" onclick="switchTab('pengaturan')">Pengaturan</div>
     </div>
 
@@ -352,6 +353,88 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
       </div>
     </div>
 
+    <div id="tab-ai" style="display:none;">
+      <div class="card">
+        <h3>Status &amp; Sambungan WhatsApp</h3>
+        <label>Balas otomatis oleh AI</label>
+        <select id="aiAktifSelect">
+          <option value="ON">Aktif — AI membalas pertanyaan pasien</option>
+          <option value="OFF">Nonaktif — pesan masuk tidak dibalas</option>
+        </select>
+        <button style="width:100%; margin-top:10px;" onclick="simpanAIAktif()">Simpan Status</button>
+        <div class="msg" id="aiAktifMsg"></div>
+
+        <label style="margin-top:16px;">URL Webhook (tempel ke pengaturan device di dashboard Fonnte)</label>
+        <div class="row" style="flex-wrap:nowrap;">
+          <input type="text" id="webhookUrlInput" readonly style="flex:1; min-width:0;">
+          <button class="secondary" style="flex:0 0 auto; min-width:0;" onclick="salinWebhook()">Salin</button>
+        </div>
+        <div class="hint">Rahasiakan URL ini. Di Fonnte: Device → Edit → isi kolom Webhook, lalu aktifkan opsi <strong>Personal</strong> agar pesan pribadi dari pasien diteruskan. Mengaktifkan Personal tidak membuat Fonnte membalas sendiri.</div>
+      </div>
+
+      <div class="card">
+        <h3>Basis Pengetahuan</h3>
+        <p class="hint" style="margin-top:0;">AI hanya boleh menjawab dari isi di sini: jam praktik, jadwal dokter, tarif, alur BPJS, syarat rawat inap, alamat, dan sejenisnya. Jangan masukkan data pasien.</p>
+        <label>Topik</label>
+        <input type="text" id="kbTopik" placeholder="mis. Jam praktik poli">
+        <label>Isi</label>
+        <textarea id="kbIsi" style="min-height:110px;" placeholder="Tulis informasi selengkap dan seakurat mungkin."></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="tambahKB()">Tambah ke Basis Pengetahuan</button>
+
+        <label style="margin-top:18px;">Tambah massal (satu per baris, pisahkan topik dan isi dengan tanda | )</label>
+        <textarea id="kbBulk" style="min-height:90px;" placeholder="Jam IGD | IGD buka 24 jam setiap hari.
+Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes tingkat pertama."></textarea>
+        <button class="secondary" style="width:100%; margin-top:10px;" onclick="tambahKBMassal()">Tambah Semua</button>
+        <div class="msg" id="kbMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Isi Basis Pengetahuan Saat Ini</h3>
+        <div id="kbList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Uji Coba Jawaban</h3>
+        <p class="hint" style="margin-top:0;">Coba pertanyaan pasien di sini. Tidak ada pesan WhatsApp yang dikirim dan tidak dicatat.</p>
+        <textarea id="ujiInput" style="min-height:70px;" placeholder="mis. Poli anak buka jam berapa?"></textarea>
+        <button style="width:100%; margin-top:10px;" onclick="ujiAI()" id="btnUjiAI">Uji Pertanyaan</button>
+        <div id="ujiHasil" style="display:none; margin-top:12px; padding:12px; border:1px solid var(--line); border-radius:8px; font-size:13px; line-height:1.55;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Pengaturan Balasan</h3>
+        <div class="row">
+          <div>
+            <label>Nomor IGD / Telepon RS (disisipkan lewat {kontakIGD})</label>
+            <input type="text" id="aiKontakIGD" placeholder="(0289) 430822">
+          </div>
+          <div>
+            <label>Batas balasan per nomor per jam</label>
+            <input type="number" id="aiBatas" min="1" max="200" placeholder="20">
+          </div>
+        </div>
+        <label>Balasan ke pasien jika perlu ditangani petugas. Variabel: {namaRS}, {kontakIGD}</label>
+        <textarea id="aiTplEskalasi" style="min-height:110px;"></textarea>
+        <label>Balasan ke pasien jika terdeteksi kata darurat (sesak napas, nyeri dada, pingsan, dst.)</label>
+        <textarea id="aiTplDarurat" style="min-height:100px;"></textarea>
+        <button style="width:100%; margin-top:14px;" onclick="simpanPengaturanBalasanAI()">Simpan Pengaturan Balasan</button>
+        <div class="hint">Notifikasi ke admin memakai Nomor WA Admin di tab Pengaturan. Gunakan nomor yang berbeda dari nomor WA pengirim, karena WhatsApp tidak memberi notifikasi untuk pesan ke nomor sendiri.</div>
+        <div class="msg" id="aiBalasanMsg"></div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div style="padding:18px 18px 0;"><h3>Riwayat Percakapan (50 terakhir)</h3>
+          <button class="secondary" style="margin-bottom:10px;" onclick="muatRiwayatAI()">Muat Ulang</button></div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Waktu</th><th>No. WA</th><th>Pertanyaan</th><th>Balasan</th><th>Status</th></tr></thead>
+            <tbody id="riwayatAIBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="riwayatAIEmpty" style="display:none;">Belum ada percakapan.</div>
+      </div>
+    </div>
+
     <div id="tab-pengaturan" style="display:none;">
       <div class="card">
         <h3>Nomor WhatsApp Pengirim</h3>
@@ -503,13 +586,14 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   function switchTab(name){
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
-    ['scan','tambah','antrian','master','kontrol','unggah','pengaturan'].forEach(t => {
+    ['scan','tambah','antrian','master','kontrol','unggah','ai','pengaturan'].forEach(t => {
       document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
     });
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
     if(name === 'pengaturan') muatPengaturan();
     if(name === 'kontrol') refreshKontrolData();
+    if(name === 'ai') muatAI();
   }
 
   function toggleKontrolInline(context){
@@ -596,8 +680,8 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
   async function refreshData(){
     try{
       const [antrianRes, statsRes] = await Promise.all([
-        fetch(`${API_URL}?action=getAntrian`),
-        fetch(`${API_URL}?action=getStats`)
+        fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getAntrian`),
+        fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getStats`)
       ]);
       const antrian = await antrianRes.json();
       const stats = await statsRes.json();
@@ -650,7 +734,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     if(!noRM) return;
     showMsg('scanMsg', 'Mencari data pasien...', true);
     try{
-      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
       const data = await res.json();
       document.getElementById('hasilScanCard').style.display = 'block';
       document.getElementById('scanNoRM').value = noRM;
@@ -737,7 +821,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
   // ===== PENGATURAN =====
   async function refreshJenisOptions(){
     try{
-      const res = await fetch(`${API_URL}?action=getSettings`);
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`);
       const data = await res.json();
       const jenisKustom = (data.templates || []).map(t => t.jenis);
       ['scanJenis', 'jenisInput'].forEach(selId => {
@@ -756,7 +840,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   async function muatPengaturan(){
     try{
-      const res = await fetch(`${API_URL}?action=getSettings`);
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`);
       const data = await res.json();
       document.getElementById('fonnteTokenInput').value = data.fonnteToken || '';
       document.getElementById('nomorWAInput').value = data.nomorWAPengirim || '';
@@ -930,7 +1014,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     const noRM = document.getElementById('kontrolNoRM').value.trim();
     if(!noRM) return;
     try{
-      const res = await fetch(`${API_URL}?action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=lookupPasien&noRM=${encodeURIComponent(noRM)}`);
       const data = await res.json();
       if(data.found){
         document.getElementById('kontrolNama').value = data.nama;
@@ -985,7 +1069,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
 
   async function refreshKontrolData(){
     try{
-      const res = await fetch(`${API_URL}?action=getJadwalKontrol`);
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getJadwalKontrol`);
       const list = await res.json();
       const body = document.getElementById('kontrolBody');
       body.innerHTML = '';
@@ -1170,6 +1254,179 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
     } finally {
       btn.disabled = false; btn.textContent = 'Tambahkan yang Dicentang';
     }
+  }
+
+  // ===== TANYA JAWAB AI =====
+  let aiSettingsCache = {};
+
+  async function muatAI(){
+    try{
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`);
+      const s = await res.json();
+      aiSettingsCache = s;
+      document.getElementById('aiAktifSelect').value = (s.aiAktif === 'ON') ? 'ON' : 'OFF';
+      document.getElementById('webhookUrlInput').value = s.webhookSecret
+        ? `${API_URL}?action=waWebhook&secret=${s.webhookSecret}`
+        : 'Belum tersedia — jalankan fungsi setupAI di Apps Script dulu.';
+      document.getElementById('aiKontakIGD').value = s.kontakIGD || '';
+      document.getElementById('aiBatas').value = s.batasPesanPerJam || '20';
+      document.getElementById('aiTplEskalasi').value = s.templateEskalasi || '';
+      document.getElementById('aiTplDarurat').value = s.templateDarurat || '';
+    } catch(err){ console.error(err); }
+    muatKB();
+    muatRiwayatAI();
+  }
+
+  async function simpanAIAktif(){
+    const value = document.getElementById('aiAktifSelect').value;
+    try{
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'AIAktif', value }) });
+      showMsg('aiAktifMsg', value === 'ON' ? 'AI aktif.' : 'AI dinonaktifkan.', true);
+    } catch(err){ showMsg('aiAktifMsg', 'Gagal menyimpan.', false); }
+  }
+
+  function salinWebhook(){
+    const el = document.getElementById('webhookUrlInput');
+    el.select();
+    try{ navigator.clipboard.writeText(el.value); showMsg('aiAktifMsg', 'URL webhook disalin.', true); }
+    catch(err){ document.execCommand('copy'); showMsg('aiAktifMsg', 'URL webhook disalin.', true); }
+  }
+
+  async function muatKB(){
+    try{
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getKB`);
+      const list = await res.json();
+      const wrap = document.getElementById('kbList');
+      wrap.innerHTML = '';
+      if(!Array.isArray(list) || list.length === 0){
+        wrap.innerHTML = '<div class="hint">Belum ada isi. Tambahkan informasi di kartu atas.</div>';
+        return;
+      }
+      list.forEach(k => {
+        const div = document.createElement('div');
+        div.style.cssText = 'margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid #eeeae0;';
+        div.innerHTML = `
+          <input type="text" data-kbtopik="${escapeHtml(k.id)}" value="${escapeHtml(k.topik)}" style="font-weight:600;">
+          <textarea data-kbisi="${escapeHtml(k.id)}" style="min-height:90px; margin-top:6px;">${escapeHtml(k.isi)}</textarea>
+          <div class="row" style="margin-top:8px;">
+            <button class="secondary" onclick="simpanKB('${escapeHtml(k.id)}', this)">Simpan Perubahan</button>
+            <button class="ghost" onclick="hapusKB('${escapeHtml(k.id)}')">Hapus</button>
+          </div>`;
+        wrap.appendChild(div);
+      });
+    } catch(err){ console.error(err); }
+  }
+
+  async function postKB(body){
+    const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(Object.assign({ pin: PIN }, body)) });
+    return res.json();
+  }
+
+  async function tambahKB(){
+    const topik = document.getElementById('kbTopik').value.trim();
+    const isi = document.getElementById('kbIsi').value.trim();
+    if(!topik || !isi){ showMsg('kbMsg', 'Topik dan isi wajib diisi.', false); return; }
+    try{
+      const r = await postKB({ action:'addKB', list:[{ topik, isi }] });
+      if(r.error){ showMsg('kbMsg', r.error, false); return; }
+      document.getElementById('kbTopik').value = ''; document.getElementById('kbIsi').value = '';
+      showMsg('kbMsg', 'Ditambahkan ke basis pengetahuan.', true);
+      muatKB();
+    } catch(err){ showMsg('kbMsg', 'Gagal menambahkan.', false); }
+  }
+
+  async function tambahKBMassal(){
+    const raw = document.getElementById('kbBulk').value.trim();
+    if(!raw) return;
+    const list = raw.split('\n').map(l => {
+      const i = l.indexOf('|');
+      return i === -1 ? null : { topik: l.slice(0, i).trim(), isi: l.slice(i + 1).trim() };
+    }).filter(x => x && x.topik && x.isi);
+    if(list.length === 0){ showMsg('kbMsg', 'Tidak ada baris valid. Format: Topik | Isi', false); return; }
+    try{
+      const r = await postKB({ action:'addKB', list });
+      if(r.error){ showMsg('kbMsg', r.error, false); return; }
+      document.getElementById('kbBulk').value = '';
+      showMsg('kbMsg', `${r.added} entri ditambahkan.`, true);
+      muatKB();
+    } catch(err){ showMsg('kbMsg', 'Gagal menambahkan.', false); }
+  }
+
+  async function simpanKB(id, btn){
+    const topik = document.querySelector(`input[data-kbtopik="${id}"]`).value.trim();
+    const isi = document.querySelector(`textarea[data-kbisi="${id}"]`).value.trim();
+    if(!topik || !isi){ showMsg('kbMsg', 'Topik dan isi tidak boleh kosong.', false); return; }
+    btn.disabled = true;
+    try{
+      await postKB({ action:'updateKB', id, topik, isi });
+      btn.textContent = 'Tersimpan ✓';
+      setTimeout(() => { btn.textContent = 'Simpan Perubahan'; btn.disabled = false; }, 1500);
+    } catch(err){ btn.disabled = false; showMsg('kbMsg', 'Gagal menyimpan.', false); }
+  }
+
+  async function hapusKB(id){
+    if(!confirm('Hapus entri ini dari basis pengetahuan?')) return;
+    await postKB({ action:'hapusKB', id });
+    muatKB();
+  }
+
+  async function ujiAI(){
+    const pertanyaan = document.getElementById('ujiInput').value.trim();
+    if(!pertanyaan) return;
+    const btn = document.getElementById('btnUjiAI');
+    const box = document.getElementById('ujiHasil');
+    btn.disabled = true; btn.textContent = 'Memproses...';
+    try{
+      const r = await postKB({ action:'ujiAI', pertanyaan });
+      box.style.display = 'block';
+      if(r.error){ box.textContent = r.error; return; }
+      const status = r.eskalasi
+        ? `<span class="badge Gagal">Diteruskan ke petugas</span> <span class="hint">${escapeHtml(r.alasan)}</span>`
+        : (r.balas ? '<span class="badge Terkirim">Dijawab AI</span>' : '<span class="badge Pending">Tidak dibalas</span>');
+      box.innerHTML = `${status}<div style="margin-top:8px; white-space:pre-wrap;">${escapeHtml(r.teks || '(tidak ada balasan)')}</div>`;
+    } catch(err){
+      box.style.display = 'block'; box.textContent = 'Gagal memproses uji coba.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Uji Pertanyaan';
+    }
+  }
+
+  async function simpanPengaturanBalasanAI(){
+    const pairs = [
+      ['KontakIGD', document.getElementById('aiKontakIGD').value.trim()],
+      ['BatasPesanPerJam', document.getElementById('aiBatas').value.trim() || '20'],
+      ['TemplateBalasanEskalasi', document.getElementById('aiTplEskalasi').value.trim()],
+      ['TemplateBalasanDarurat', document.getElementById('aiTplDarurat').value.trim()]
+    ];
+    try{
+      for(const [key, value] of pairs){
+        await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key, value }) });
+      }
+      showMsg('aiBalasanMsg', 'Pengaturan balasan tersimpan.', true);
+    } catch(err){ showMsg('aiBalasanMsg', 'Gagal menyimpan.', false); }
+  }
+
+  async function muatRiwayatAI(){
+    try{
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getPercakapanAI`);
+      const list = await res.json();
+      const body = document.getElementById('riwayatAIBody');
+      body.innerHTML = '';
+      const kosong = !Array.isArray(list) || list.length === 0;
+      document.getElementById('riwayatAIEmpty').style.display = kosong ? 'block' : 'none';
+      if(kosong) return;
+      list.forEach(r => {
+        const badge = r.status === 'Dijawab AI' ? 'Terkirim' : (r.status === 'Diabaikan' ? 'Pending' : 'Gagal');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(r.waktu)}</td>
+          <td>${escapeHtml(r.noHp)}</td>
+          <td>${escapeHtml(r.pertanyaan)}</td>
+          <td>${escapeHtml(r.jawaban)}</td>
+          <td><span class="badge ${badge}">${escapeHtml(r.status)}</span>${r.alasan ? `<div class="hint">${escapeHtml(r.alasan)}</div>` : ''}</td>`;
+        body.appendChild(tr);
+      });
+    } catch(err){ console.error(err); }
   }
 
   window.onload = () => {
