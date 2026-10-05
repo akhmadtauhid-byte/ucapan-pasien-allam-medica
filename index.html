@@ -203,13 +203,16 @@
             <input type="text" id="kontrolPoli" placeholder="mis. Poli Umum">
           </div>
         </div>
+        <label>Kasus / Terapi (opsional)</label>
+        <input type="text" id="kontrolKasus" list="kasusList" placeholder="mis. Hipertensi">
+        <datalist id="kasusList"></datalist>
         <button style="width:100%; margin-top:14px;" onclick="tambahKontrolSatu()">Tambah Jadwal</button>
       </div>
 
       <div class="card">
         <h3>Tambah Massal (Tempel dari Excel)</h3>
-        <label>Format per baris: No.RM, Nama, No.HP, Tanggal (YYYY-MM-DD), Dokter, Poli</label>
-        <textarea id="kontrolBulkInput" placeholder="000123, Budi Santoso, 081234567890, 2026-09-10, dr. Andi, Poli Umum"></textarea>
+        <label>Format per baris: No.RM, Nama, No.HP, Tanggal (YYYY-MM-DD), Dokter, Poli, Kasus (kolom terakhir boleh dikosongkan)</label>
+        <textarea id="kontrolBulkInput" placeholder="000123, Budi Santoso, 081234567890, 2026-09-10, dr. Andi, Poli Umum, Hipertensi"></textarea>
         <button style="width:100%; margin-top:14px;" onclick="tambahKontrolMassal()">Tambah Semua</button>
         <div class="msg" id="kontrolTambahMsg"></div>
       </div>
@@ -235,7 +238,11 @@
           <button class="ghost" style="padding:8px 10px; font-size:12px;" onclick="rentangSkrin('semua')">Semua tanggal</button>
         </div>
         <div class="row">
-          <div><label>Dokter / Poli</label><input type="text" id="skrinPoli" placeholder="mis. Poli Umum atau dr. Andi" oninput="renderKontrol()"></div>
+          <div><label>Dokter</label><select id="skrinDokter" onchange="renderKontrol()"><option value="">Semua dokter</option></select></div>
+          <div><label>Kasus / Terapi</label><select id="skrinKasus" onchange="renderKontrol()"><option value="">Semua kasus</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>Poli</label><input type="text" id="skrinPoli" placeholder="mis. Poli Umum" oninput="renderKontrol()"></div>
           <div><label>Status pengingat</label>
             <select id="skrinStatus" onchange="renderKontrol()">
               <option value="semua">Semua</option>
@@ -247,9 +254,15 @@
         <label>Cari nama / No. RM / No. HP</label>
         <input type="text" id="skrinCari" placeholder="Ketik untuk mencari..." oninput="renderKontrol()">
         <div style="margin-top:12px; font-size:13px;"><strong id="skrinRingkas">0 pasien</strong></div>
+        <div class="hint" style="margin-bottom:4px;">Ringkasan kelompok (klik untuk menyaring):</div>
+        <div id="skrinKelompok" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
         <div class="row" style="margin-top:10px;">
           <button class="secondary" onclick="pilihSemuaSkrin(true)">Pilih Semua yang Tampil</button>
           <button class="ghost" style="padding:11px 18px; font-size:14px;" onclick="pilihSemuaSkrin(false)">Kosongkan Pilihan</button>
+        </div>
+        <div class="row" style="margin-top:12px; align-items:flex-end;">
+          <div><label style="margin-top:0;">Tetapkan kasus untuk yang dicentang</label><input type="text" id="skrinSetKasus" list="kasusList" placeholder="mis. Hipertensi (kosongkan = hapus kasus)"></div>
+          <div style="flex:0 0 auto;"><button class="secondary" onclick="setKasusTerpilih()">Terapkan</button></div>
         </div>
         <button style="width:100%; margin-top:12px;" id="btnKirimTerpilih" onclick="kirimTerpilih()">Kirim Pengingat ke yang Dicentang</button>
         <div class="msg" id="skrinMsg"></div>
@@ -258,7 +271,7 @@
       <div class="card" style="padding:0;">
         <div style="overflow-x:auto;">
           <table id="kontrolTable">
-            <thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Reminder</th><th></th></tr></thead>
+            <thead><tr><th style="width:34px;"></th><th>Nama</th><th>No. HP</th><th>Tgl Kontrol</th><th>Dokter/Poli</th><th>Kasus</th><th>Reminder</th><th></th></tr></thead>
             <tbody id="kontrolBody"></tbody>
           </table>
         </div>
@@ -446,6 +459,7 @@ Siti Aminah, 081298765432, 2026-08-21, Anggrek"></textarea>
             <div><label style="margin-top:0;">Tanggal Kontrol</label><input type="date" id="masterTglKontrol"></div>
             <div><label style="margin-top:0;">Dokter</label><input type="text" id="masterDokter" placeholder="dr. ..."></div>
             <div><label style="margin-top:0;">Poli</label><input type="text" id="masterPoli" placeholder="mis. Poli Umum"></div>
+            <div><label style="margin-top:0;">Kasus / Terapi</label><input type="text" id="masterKasus" list="kasusList" placeholder="mis. Hipertensi"></div>
           </div>
           <button style="width:100%; margin-top:12px;" onclick="jadwalkanDariMaster()">Masukkan ke Jadwal Kontrol</button>
           <div class="hint">Pasien yang dicentang masuk ke tab Kontrol Pasien, lalu dapat diskrining berdasarkan rentang tanggal dan dikirimi pengingat. Hanya pasien yang punya No. HP yang bisa dijadwalkan.</div>
@@ -722,8 +736,12 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <h3>Reminder Kontrol Pasien</h3>
         <label>Hari Reminder Sebelum Jadwal (pisahkan koma, mis. "3,1" = H-3 dan H-1)</label>
         <input type="text" id="hariReminderInput" placeholder="3,1">
-        <label>Template Pesan Reminder. Variabel: {nama}, {namaRS}, {tanggalKontrol}, {dokter}, {poli}, {hariLagi}</label>
+        <label>Template Pesan Reminder. Variabel: {nama}, {namaRS}, {tanggalKontrol}, {dokter}, {poli}, {hariLagi}, {kasus}, {pesanKasus}</label>
         <textarea id="templateKontrolInput" style="min-height:140px;"></textarea>
+        <label>Daftar Kasus / Terapi (pisahkan koma) — muncul sebagai pilihan di form dan filter</label>
+        <input type="text" id="daftarKasusInput" placeholder="Hipertensi, Diabetes Melitus (DM), Jantung">
+        <label>Pesan Khusus per Kasus — satu baris satu kasus, format: Kasus = pesan. Pesan ini otomatis disisipkan ke pengingat pasien dengan kasus tersebut (atau tulis {pesanKasus} di template untuk menentukan posisinya). Variabel {kasus} juga tersedia.</label>
+        <textarea id="pesanKasusInput" style="min-height:130px;" placeholder="Hipertensi = Jangan lupa minum obat tekanan darah secara teratur dan kurangi garam.&#10;Diabetes Melitus (DM) = Mohon berpuasa 8-10 jam bila diminta cek gula darah puasa."></textarea>
         <button style="width:100%; margin-top:14px;" onclick="simpanPengaturanKontrol()">Simpan Pengaturan Reminder Kontrol</button>
         <div class="msg" id="kontrolSettingMsg"></div>
       </div>
@@ -808,8 +826,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     if(name !== 'scan') tutupKamera();
     if(name === 'scan') setTimeout(()=>document.getElementById('scanInput').focus(), 100);
     if(name === 'pengaturan') muatPengaturan();
-    if(name === 'kontrol') refreshKontrolData();
-    if(name === 'master') muatMaster();
+    if(name === 'kontrol'){ muatDaftarKasus(); refreshKontrolData(); }
+    if(name === 'master'){ muatMaster(); muatDaftarKasus(); }
     if(name === 'ai') muatAI();
     if(name === 'sosialisasi') muatSosialisasi();
   }
@@ -1102,13 +1120,14 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     const tgl = document.getElementById('masterTglKontrol').value;
     const dokter = document.getElementById('masterDokter').value.trim();
     const poli = document.getElementById('masterPoli').value.trim();
+    const kasus = document.getElementById('masterKasus').value.trim();
     const terpilih = masterData.filter(m => masterDipilih.has(m.noRM));
     if(terpilih.length === 0){ showMsg('masterListMsg', 'Belum ada pasien yang dicentang.', false); return; }
     if(!tgl){ showMsg('masterListMsg', 'Isi tanggal kontrol dulu.', false); return; }
     const denganHp = terpilih.filter(m => m.noHp);
     const tanpaHp = terpilih.length - denganHp.length;
     if(denganHp.length === 0){ showMsg('masterListMsg', 'Pasien yang dicentang tidak punya No. HP.', false); return; }
-    const jadwalList = denganHp.map(m => ({ noRM: m.noRM, nama: m.nama, noHp: m.noHp, tanggalKontrol: tgl, dokter, poli }));
+    const jadwalList = denganHp.map(m => ({ noRM: m.noRM, nama: m.nama, noHp: m.noHp, tanggalKontrol: tgl, dokter, poli, kasus }));
     try{
       const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'addJadwalKontrol', pin: PIN, jadwalList }) });
       const r = await res.json();
@@ -1154,6 +1173,9 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       document.getElementById('templateAdminInput').value = data.templateNotifikasiAdmin || '';
       document.getElementById('hariReminderInput').value = data.hariReminderKontrol || '3,1';
       document.getElementById('templateKontrolInput').value = data.templateReminderKontrol || '';
+      document.getElementById('daftarKasusInput').value = data.daftarKasus || '';
+      document.getElementById('pesanKasusInput').value = data.pesanKasus || '';
+      setDaftarKasus(data.daftarKasus);
       document.getElementById('anthropicKeyInput').value = data.anthropicApiKeyMasked || '(belum diisi)';
       pemilikBelumAda = (data.pinPemilikAda === false);
       document.getElementById('anthropicModelInput').value = data.anthropicModel || 'claude-sonnet-4-6';
@@ -1371,7 +1393,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       noRM: document.getElementById('kontrolNoRM').value.trim(),
       nama, noHp, tanggalKontrol,
       dokter: document.getElementById('kontrolDokter').value.trim(),
-      poli: document.getElementById('kontrolPoli').value.trim()
+      poli: document.getElementById('kontrolPoli').value.trim(),
+      kasus: document.getElementById('kontrolKasus').value.trim()
     }];
     await kirimTambahKontrol(jadwalList);
     document.getElementById('kontrolNoRM').value = '';
@@ -1379,6 +1402,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     document.getElementById('kontrolNoHP').value = '';
     document.getElementById('kontrolDokter').value = '';
     document.getElementById('kontrolPoli').value = '';
+    document.getElementById('kontrolKasus').value = '';
   }
 
   async function tambahKontrolMassal(){
@@ -1387,7 +1411,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     const lines = raw.split('\n').filter(l => l.trim());
     const jadwalList = lines.map(line => {
       const parts = line.split(',').map(p => p.trim());
-      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '', tanggalKontrol: parts[3] || '', dokter: parts[4] || '', poli: parts[5] || '' };
+      return { noRM: parts[0] || '', nama: parts[1] || '', noHp: parts[2] || '', tanggalKontrol: parts[3] || '', dokter: parts[4] || '', poli: parts[5] || '', kasus: parts[6] || '' };
     }).filter(p => p.nama && p.noHp && p.tanggalKontrol);
 
     if(jadwalList.length === 0){ showMsg('kontrolTambahMsg', 'Tidak ada baris valid.', false); return; }
@@ -1416,6 +1440,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       if(!Array.isArray(list)) throw new Error(list.error || 'respon tidak valid');
       kontrolData = list;
       kontrolDipilih.forEach(id => { if(!list.some(k => k.id === id)) kontrolDipilih.delete(id); });
+      isiDropdownSkrin(); ringkasKelompok();
       renderKontrol();
     } catch(err){
       console.error(err);
@@ -1447,6 +1472,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     const dari = document.getElementById('skrinDari').value;
     const sampai = document.getElementById('skrinSampai').value;
     const poli = document.getElementById('skrinPoli').value.trim().toLowerCase();
+    const dokter = document.getElementById('skrinDokter').value;
+    const kasus = document.getElementById('skrinKasus').value;
     const status = document.getElementById('skrinStatus').value;
     const cari = document.getElementById('skrinCari').value.trim().toLowerCase();
     return kontrolData.filter(k => {
@@ -1454,6 +1481,8 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       if(dari && (!tgl || tgl < dari)) return false;
       if(sampai && (!tgl || tgl > sampai)) return false;
       if(poli && !(`${k.dokter || ''} ${k.poli || ''}`.toLowerCase().includes(poli))) return false;
+      if(dokter && String(k.dokter || '').trim() !== dokter) return false;
+      if(kasus === '__kosong__' ? !!String(k.kasus || '').trim() : (kasus && String(k.kasus || '').trim() !== kasus)) return false;
       const sudah = String(k.reminderTerkirim || '').trim() !== '';
       if(status === 'belum' && sudah) return false;
       if(status === 'sudah' && !sudah) return false;
@@ -1476,6 +1505,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         <td>${escapeHtml(k.noHp)}</td>
         <td>${escapeHtml(k.tanggalKontrol)}</td>
         <td>${escapeHtml(k.dokter)} / ${escapeHtml(k.poli)}</td>
+        <td>${k.kasus ? '<span class="badge Pending">' + escapeHtml(k.kasus) + '</span>' : '<span class="hint">-</span>'}</td>
         <td>${rem ? '<span class="badge Terkirim">' + escapeHtml(rem) + '</span>' : '<span class="badge Pending">belum</span>'}</td>
         <td><button class="ghost" onclick="hapusKontrol('${escapeHtml(k.id)}')">Hapus</button></td>`;
       tr.querySelector('.skrin-check').addEventListener('change', e => {
@@ -1485,6 +1515,63 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       body.appendChild(tr);
     });
     ringkasSkrin();
+  }
+
+  let daftarKasus = [], kasusDimuat = false;
+  async function muatDaftarKasus(){
+    if(kasusDimuat) return;
+    try{
+      const r = await (await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getSettings`)).json();
+      if(r && !r.error){ kasusDimuat = true; setDaftarKasus(r.daftarKasus); isiDropdownSkrin(); }
+    } catch(e){ /* daftar kasus opsional */ }
+  }
+  function setDaftarKasus(teks){
+    daftarKasus = String(teks || '').split(',').map(x => x.trim()).filter(Boolean);
+    isiDatalistKasus();
+  }
+  function isiDatalistKasus(){
+    const dl = document.getElementById('kasusList'); if(!dl) return;
+    const semua = Array.from(new Set(daftarKasus.concat(kontrolData.map(k => String(k.kasus || '').trim()).filter(Boolean))));
+    dl.innerHTML = semua.map(k => `<option value="${escapeHtml(k)}">`).join('');
+  }
+  function isiDropdownSkrin(){
+    const isi = (id, semuaLabel, nilai, ekstra) => {
+      const el = document.getElementById(id), cur = el.value;
+      el.innerHTML = `<option value="">${semuaLabel}</option>` + (ekstra || '') + nilai.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+      el.value = Array.from(el.options).some(o => o.value === cur) ? cur : '';
+    };
+    const dokter = Array.from(new Set(kontrolData.map(k => String(k.dokter || '').trim()).filter(Boolean))).sort();
+    const kasus = Array.from(new Set(daftarKasus.concat(kontrolData.map(k => String(k.kasus || '').trim()).filter(Boolean)))).sort();
+    isi('skrinDokter', 'Semua dokter', dokter);
+    isi('skrinKasus', 'Semua kasus', kasus, '<option value="__kosong__">(Belum ada kasus)</option>');
+    isiDatalistKasus();
+  }
+  function ringkasKelompok(){
+    const hitung = (fn) => { const m = {}; kontrolData.forEach(k => { const v = fn(k); m[v] = (m[v] || 0) + 1; }); return m; };
+    const dok = hitung(k => String(k.dokter || '').trim() || '(tanpa dokter)');
+    const kas = hitung(k => String(k.kasus || '').trim() || '(belum ada kasus)');
+    const chip = (label, n, id, nilai) => `<button type="button" class="ghost" style="padding:4px 10px; font-size:12px;" onclick="pilihKelompok('${id}', '${escapeHtml(nilai).replace(/'/g, '&#39;')}')">${escapeHtml(label)} · ${n}</button>`;
+    const html = Object.keys(dok).sort().map(d => chip('👨‍⚕️ ' + d, dok[d], 'skrinDokter', d === '(tanpa dokter)' ? '' : d))
+      .concat(Object.keys(kas).sort().map(c => chip('🩺 ' + c, kas[c], 'skrinKasus', c === '(belum ada kasus)' ? '__kosong__' : c))).join('');
+    document.getElementById('skrinKelompok').innerHTML = html || '<span class="hint">Belum ada data.</span>';
+  }
+  function pilihKelompok(id, nilai){
+    const el = document.getElementById(id);
+    el.value = (el.value === nilai) ? '' : nilai;
+    renderKontrol();
+  }
+  async function setKasusTerpilih(){
+    const ids = kontrolTersaring().filter(k => kontrolDipilih.has(k.id)).map(k => k.id);
+    if(ids.length === 0){ showMsg('skrinMsg', 'Belum ada pasien yang dicentang.', false); return; }
+    const kasus = document.getElementById('skrinSetKasus').value.trim();
+    if(!confirm(kasus ? `Tetapkan kasus "${kasus}" untuk ${ids.length} pasien?` : `Hapus kasus untuk ${ids.length} pasien?`)) return;
+    try{
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'ubahKasusJadwal', pin: PIN, ids, kasus }) });
+      const r = await res.json();
+      if(!r.success){ showMsg('skrinMsg', r.error || 'Gagal menyimpan kasus.', false); return; }
+      showMsg('skrinMsg', `${r.updated} pasien diperbarui.`, true);
+      await refreshKontrolData();
+    } catch(err){ showMsg('skrinMsg', 'Gagal menyimpan kasus (tidak terhubung ke server).', false); }
   }
 
   function ringkasSkrin(){
@@ -1561,6 +1648,10 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     try{
       await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'HariReminderKontrol', value: hariReminder }) });
       await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'TemplateReminderKontrol', value: templateKontrol }) });
+      const dk = document.getElementById('daftarKasusInput').value.trim();
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'DaftarKasus', value: dk }) });
+      await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'updateSetting', pin: PIN, key:'PesanKasus', value: document.getElementById('pesanKasusInput').value.trim() }) });
+      setDaftarKasus(dk);
       showMsg('kontrolSettingMsg', 'Pengaturan reminder kontrol tersimpan.', true);
     } catch(err){
       showMsg('kontrolSettingMsg', 'Gagal menyimpan.', false);
