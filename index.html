@@ -413,6 +413,19 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
             <input type="number" id="aiBatas" min="1" max="200" placeholder="20">
           </div>
         </div>
+        <h3 style="margin-top:22px;">Sapaan AI</h3>
+        <p class="hint" style="margin-top:0;">Sapaan ini dipasang otomatis di setiap jawaban AI, jadi petugas cukup mengubahnya di sini. Kosongkan kolom jika tidak ingin memakainya. Variabel: {salamWaktu} (Selamat pagi/siang/sore/malam otomatis sesuai jam WIB), {namaRS}, {kontakIGD}</p>
+        <label>Sapaan pembuka (di awal jawaban)</label>
+        <textarea id="aiSapaanPembuka" style="min-height:60px;" oninput="pratinjauSapaan()"></textarea>
+        <label>Sapaan penutup (di akhir jawaban)</label>
+        <textarea id="aiSapaanPenutup" style="min-height:60px;" oninput="pratinjauSapaan()"></textarea>
+        <label>Balasan jika pasien hanya menyapa (mis. "Halo", "Selamat pagi", "Assalamualaikum")</label>
+        <textarea id="aiSapaanBalas" style="min-height:90px;" oninput="pratinjauSapaan()"></textarea>
+        <div class="hint" style="margin-top:10px;">Contoh tampilan jawaban di WhatsApp pasien:</div>
+        <div id="sapaanPratinjau" style="margin-top:6px; padding:12px; background:#e7f5e8; border:1px solid var(--line); border-radius:8px; font-size:13px; line-height:1.55; white-space:pre-wrap;"></div>
+        <div class="hint">Jika pasien menyapa dengan "Assalamualaikum", sistem otomatis menambahkan "Waalaikumsalam warahmatullahi wabarakatuh." di depan balasan sapaan.</div>
+
+        <h3 style="margin-top:22px;">Balasan Lainnya</h3>
         <label>Balasan ke pasien jika perlu ditangani petugas. Variabel: {namaRS}, {kontakIGD}</label>
         <textarea id="aiTplEskalasi" style="min-height:110px;"></textarea>
         <label>Balasan ke pasien jika terdeteksi kata darurat (sesak napas, nyeri dada, pingsan, dst.)</label>
@@ -1272,6 +1285,10 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       document.getElementById('aiBatas').value = s.batasPesanPerJam || '20';
       document.getElementById('aiTplEskalasi').value = s.templateEskalasi || '';
       document.getElementById('aiTplDarurat').value = s.templateDarurat || '';
+      document.getElementById('aiSapaanPembuka').value = s.sapaanPembuka ?? '';
+      document.getElementById('aiSapaanPenutup').value = s.sapaanPenutup ?? '';
+      document.getElementById('aiSapaanBalas').value = s.sapaanBalas ?? '';
+      pratinjauSapaan();
     } catch(err){ console.error(err); }
     muatKB();
     muatRiwayatAI();
@@ -1391,8 +1408,37 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     }
   }
 
+  const DEFAULT_SAPAAN_BALAS_UI = '{salamWaktu} Bapak/Ibu 😊\nSelamat datang di layanan informasi {namaRS}. Silakan ketik pertanyaan Anda, misalnya jam poli, cara pendaftaran, atau informasi BPJS.';
+
+  function salamWaktuSekarang(){
+    const jam = parseInt(new Intl.DateTimeFormat('en-GB', { hour:'numeric', hour12:false, timeZone:'Asia/Jakarta' }).format(new Date()), 10);
+    if(jam >= 4 && jam < 11) return 'Selamat pagi';
+    if(jam >= 11 && jam < 15) return 'Selamat siang';
+    if(jam >= 15 && jam < 18) return 'Selamat sore';
+    return 'Selamat malam';
+  }
+
+  function isiVarSapaan(t){
+    const namaRS = (aiSettingsCache && aiSettingsCache.namaRS) || 'RSU Allam Medica';
+    const igd = document.getElementById('aiKontakIGD').value || '(0289) 430822';
+    return String(t || '').replace(/{salamWaktu}/g, salamWaktuSekarang()).replace(/{namaRS}/g, namaRS).replace(/{kontakIGD}/g, igd).trim();
+  }
+
+  function pratinjauSapaan(){
+    const pembuka = isiVarSapaan(document.getElementById('aiSapaanPembuka').value);
+    const penutup = isiVarSapaan(document.getElementById('aiSapaanPenutup').value);
+    const isi = 'Poli Anak buka setiap hari Senin–Sabtu pukul 08.00–12.00 WIB.';
+    const sapa = isiVarSapaan(document.getElementById('aiSapaanBalas').value);
+    document.getElementById('sapaanPratinjau').textContent =
+      [pembuka, isi, penutup].filter(Boolean).join('\n\n') +
+      '\n\n— jika pasien hanya menyapa —\n' + sapa;
+  }
+
   async function simpanPengaturanBalasanAI(){
     const pairs = [
+      ['SapaanPembuka', document.getElementById('aiSapaanPembuka').value.trim()],
+      ['SapaanPenutup', document.getElementById('aiSapaanPenutup').value.trim()],
+      ['SapaanBalas', document.getElementById('aiSapaanBalas').value.trim() || DEFAULT_SAPAAN_BALAS_UI],
       ['KontakIGD', document.getElementById('aiKontakIGD').value.trim()],
       ['BatasPesanPerJam', document.getElementById('aiBatas').value.trim() || '20'],
       ['TemplateBalasanEskalasi', document.getElementById('aiTplEskalasi').value.trim()],
