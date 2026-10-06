@@ -2559,11 +2559,13 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
           <input type="text" data-kbtopik="${escapeHtml(k.id)}" value="${escapeHtml(k.topik)}" style="font-weight:600;">
           <textarea data-kbisi="${escapeHtml(k.id)}" style="min-height:90px; margin-top:6px;">${escapeHtml(k.isi)}</textarea>
           <div class="kbGambar" style="margin-top:8px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            ${k.gambar ? `<a href="${escapeHtml(k.gambar)}" target="_blank" rel="noopener"><img src="${escapeHtml(k.gambar)}" alt="" style="height:64px; border:1px solid var(--line); border-radius:6px;" onerror="this.style.display='none'"></a>` : ''}
+            ${k.gambar ? `<img data-gbrprev="${escapeHtml(k.gambar)}" alt="" style="height:64px; border:1px solid var(--line); border-radius:6px;" onerror="this.style.display='none'">` : ''}
             <label class="ghost" style="margin:0; padding:8px 12px; border:1px solid var(--line); border-radius:8px; cursor:pointer; font-size:13px;">${k.gambar ? 'Ganti gambar' : '+ Gambar pengumuman'}
               <input type="file" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="unggahGambarKB('${escapeHtml(k.id)}', this)">
             </label>
+            <button class="ghost" style="padding:8px 12px; font-size:13px;" onclick="tempelUrlGambarKB('${escapeHtml(k.id)}')">Tempel tautan gambar</button>
             ${k.gambar ? `<button class="ghost" style="padding:8px 12px; font-size:13px;" onclick="hapusGambarKB('${escapeHtml(k.id)}')">Hapus gambar</button>` : ''}
+            <span class="hint" data-gbrstatus="${escapeHtml(k.id)}" style="margin:0;"></span>
           </div>
           <div class="row" style="margin-top:8px;">
             <button class="secondary" onclick="simpanKB('${escapeHtml(k.id)}', this)">Simpan Perubahan</button>
@@ -2571,14 +2573,31 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
           </div>`;
         wrap.appendChild(div);
       });
+      isiPratinjauGambar(wrap);
     } catch(err){ console.error(err); }
+  }
+
+  // Gambar yang tersimpan di Google Sheet ('sheet:<id>') diambil dulu lewat server; tautan https dipakai langsung.
+  async function srcGambar(penanda){
+    if(String(penanda).startsWith('sheet:')){
+      const id = String(penanda).slice(6);
+      const r = await (await fetch(`${API_URL}?pin=${encodeURIComponent(PIN)}&action=getGambarKB&id=${encodeURIComponent(id)}`)).json();
+      return r && r.success ? `data:${r.tipe};base64,${r.data}` : '';
+    }
+    return penanda;
+  }
+  function isiPratinjauGambar(root){
+    root.querySelectorAll('img[data-gbrprev]').forEach(async img => {
+      try{ const s = await srcGambar(img.getAttribute('data-gbrprev')); if(s) img.src = s; else img.style.display = 'none'; }
+      catch(e){ img.style.display = 'none'; }
+    });
   }
 
   // ---- Basis pengetahuan dari PDF / gambar ----
   let kbPrev = [];
   let kbAda = [];
 
-  function gambarKeBase64Kecil(file, maxSisi){
+  function gambarKeBase64Kecil(file, maxSisi, mutu){
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file);
       const img = new Image();
@@ -2592,7 +2611,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        resolve(cv.toDataURL('image/jpeg', 0.85).split(',')[1]);
+        resolve(cv.toDataURL('image/jpeg', mutu || 0.85).split(',')[1]);
       };
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('gambar')); };
       img.src = url;
@@ -2747,14 +2766,43 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
   async function unggahGambarKB(id, input){
     const file = input.files && input.files[0];
     if(!file) return;
-    showMsg('kbMsg', 'Mengunggah gambar...', true);
+    const st = document.querySelector(`[data-gbrstatus="${id}"]`);
+    const set = (t, ok) => { if(st){ st.textContent = t; st.style.color = ok ? '#15803d' : '#b91c1c'; } };
+    set('Mengunggah gambar...', true);
     try{
-      const b64 = await gambarKeBase64Kecil(file, 1600);
-      const r = await postKB({ action:'gambarKB', id, base64: b64, mediaType:'image/jpeg' });
-      if(r.error){ showMsg('kbMsg', r.error, false); return; }
+      // Sheet menampung gambar sebagai teks; perkecil bertahap sampai cukup kecil (maks sekitar 400 KB)
+      let b64 = '';
+      for(const [sisi, mutu] of [[1400, 0.82], [1200, 0.75], [1000, 0.7], [800, 0.65]]){
+        b64 = await gambarKeBase64Kecil(file, sisi, mutu);
+        if(b64.length <= 500000) break;
+      }
+      if(b64.length > 500000){ set('Gagal: gambar terlalu besar, pakai gambar yang lebih sederhana.', false); return; }
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ pin: PIN, action:'gambarKB', id, base64: b64, mediaType:'image/jpeg' }) });
+      const teks = await res.text();
+      let r;
+      try{ r = JSON.parse(teks); }
+      catch(e){
+        set('Gagal: server membalas error. Kemungkinan Code.gs terbaru belum di-deploy.', false);
+        alert('Gambar gagal disimpan. Kemungkinan Code.gs terbaru belum di-deploy (Deploy > Manage deployments > New version).');
+        return;
+      }
+      if(r.error){ set('Gagal: ' + r.error, false); alert(r.error); return; }
+      set('Gambar tersimpan.', true);
       showMsg('kbMsg', 'Gambar tersimpan. Gambar ini akan dikirim bersama jawaban saat pasien menanyakan topiknya.', true);
-      muatKB();
-    } catch(err){ showMsg('kbMsg', 'Gagal mengunggah gambar.', false); }
+      setTimeout(muatKB, 800);
+    } catch(err){ set('Gagal mengunggah gambar: ' + (err && err.message || err), false); alert('Gagal mengunggah gambar. Periksa koneksi internet, lalu coba lagi.'); }
+  }
+
+  async function tempelUrlGambarKB(id){
+    const u = prompt('Tempel tautan gambar (harus diawali https:// dan bisa dibuka publik, mis. dari GitHub Pages):');
+    if(!u) return;
+    const st = document.querySelector(`[data-gbrstatus="${id}"]`);
+    try{
+      const r = await postKB({ action:'urlGambarKB', id, url: u.trim() });
+      if(r.error){ if(st){ st.textContent = 'Gagal: ' + r.error; st.style.color = '#b91c1c'; } alert(r.error); return; }
+      if(st){ st.textContent = 'Tautan gambar tersimpan.'; st.style.color = '#15803d'; }
+      setTimeout(muatKB, 700);
+    } catch(err){ alert('Gagal menyimpan tautan. Pastikan Code.gs terbaru sudah di-deploy.'); }
   }
 
   async function hapusGambarKB(id){
@@ -2781,8 +2829,9 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
       const status = r.eskalasi
         ? `<span class="badge Gagal">Diteruskan ke petugas</span> <span class="hint">${escapeHtml(r.alasan)}</span>`
         : (r.balas ? '<span class="badge Terkirim">Dijawab AI</span>' : '<span class="badge Pending">Tidak dibalas</span>');
-      const gb = r.gambar ? `<div style="margin-top:10px;"><div class="hint" style="margin:0 0 4px;">Gambar ikut terkirim:</div><img src="${escapeHtml(r.gambar)}" alt="" style="max-width:220px; border:1px solid var(--line); border-radius:8px;" onerror="this.outerHTML='<span class=hint>(pratinjau gambar tidak tampil di sini, tetap dikirim lewat WhatsApp)</span>'"></div>` : '';
+      const gb = r.gambar ? `<div style="margin-top:10px;"><div class="hint" style="margin:0 0 4px;">Gambar ikut terkirim:</div><img data-gbrprev="${escapeHtml(r.gambar)}" alt="" style="max-width:220px; border:1px solid var(--line); border-radius:8px;" onerror="this.outerHTML='<span class=hint>(pratinjau gambar tidak tampil di sini, tetap dikirim lewat WhatsApp)</span>'"></div>` : '';
       box.innerHTML = `${status}<div style="margin-top:8px; white-space:pre-wrap;">${escapeHtml(r.teks || '(tidak ada balasan)')}</div>${gb}`;
+      isiPratinjauGambar(box);
     } catch(err){
       box.style.display = 'block'; box.textContent = 'Gagal memproses uji coba.';
     } finally {
