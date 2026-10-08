@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ucapan &amp; Survei Kepuasan Pasien — RSU Allam Medica</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Pustaka besar dimuat belakangan (tidak menahan tampilan awal): kamera scan = defer, pembaca Excel = hanya saat dibutuhkan -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
   :root{
     --ink:#2b3a50; --paper:#e8eef6; --panel:#f5f8fc; --line:#cfdae8;
@@ -145,6 +145,8 @@
     #printOnly{display:block !important;}
     #printOnly .poster{break-inside:avoid;}
   }
+  #netBanner{ position:fixed; top:0; left:0; right:0; z-index:9999; display:none; padding:8px 14px; font-size:13px; text-align:center; background:#fef3c7; color:#92400e; border-bottom:1px solid #fcd34d; }
+  #netBanner.err{ background:#fee2e2; color:#991b1b; border-bottom-color:#fca5a5; }
 </style>
 </head>
 <body>
@@ -972,6 +974,108 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
 
   let PIN = '';
 
+  // ---- Lapisan jaringan: batas waktu, coba ulang otomatis, hindari panggilan ganda, dan data awal siap pakai ----
+  // Semua panggilan ke API_URL otomatis lewat sini (tidak perlu mengubah pemanggil).
+  const _fetchAsli = window.fetch.bind(window);
+  const _primed = new Map();          // 'action|param' -> { t, teks }  (diisi dari getBootstrap, berlaku 25 detik)
+  const _berjalan = new Map();        // permintaan GET identik yang sedang jalan dipakai bersama
+  const PRIME_TTL = 25000;
+  let _bannerTimer = null;
+
+  function tampilBanner(teks, err){
+    let b = document.getElementById('netBanner');
+    if(!b){ b = document.createElement('div'); b.id = 'netBanner'; document.body.appendChild(b); }
+    b.textContent = teks; b.className = err ? 'err' : ''; b.style.display = 'block';
+    clearTimeout(_bannerTimer);
+  }
+  function sembunyiBanner(){
+    const b = document.getElementById('netBanner');
+    if(b){ clearTimeout(_bannerTimer); _bannerTimer = setTimeout(()=>{ b.style.display = 'none'; }, 600); }
+  }
+  function kunciGet(u){
+    try{
+      const x = new URL(u); const p = new URLSearchParams(x.search); p.delete('pin');
+      const a = p.get('action'); p.delete('action');
+      return a + '|' + p.toString();
+    } catch(e){ return u; }
+  }
+  const tidur = ms => new Promise(r => setTimeout(r, ms));
+  function responJson(teks){ return new Response(teks, { status:200, headers:{ 'Content-Type':'application/json' } }); }
+
+  async function ambilGetDenganUlang(u, opts){
+    const percobaan = 3;
+    let galat = null;
+    for(let i = 0; i < percobaan; i++){
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 40000);
+      try{
+        if(i > 0) tampilBanner(`Koneksi ke database lambat atau terputus, mencoba lagi (${i + 1}/${percobaan})...`, false);
+        const res = await _fetchAsli(u, Object.assign({}, opts, { signal: ctl.signal }));
+        const teks = await res.text();
+        clearTimeout(timer);
+        if(res.ok && teks && teks.trim()[0] !== '<'){ sembunyiBanner(); return teks; }
+        galat = new Error('Balasan server tidak valid');
+      } catch(e){ clearTimeout(timer); galat = e; }
+      if(i < percobaan - 1) await tidur(1200 * (i + 1));
+    }
+    tampilBanner('Tidak terhubung ke database. Periksa internet atau coba lagi beberapa saat. Data yang tampil mungkin belum terbaru.', true);
+    setTimeout(sembunyiBanner, 8000);
+    throw galat || new Error('Gagal terhubung');
+  }
+
+  window.fetch = function(input, opts){
+    const u = String(input && input.url ? input.url : input);
+    if(!u.startsWith(API_URL)) return _fetchAsli(input, opts);
+    const post = opts && opts.method && String(opts.method).toUpperCase() === 'POST';
+    if(post){
+      _primed.clear();
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 150000);
+      return _fetchAsli(input, Object.assign({}, opts, { signal: ctl.signal }))
+        .then(r => { clearTimeout(timer); return r; })
+        .catch(e => {
+          clearTimeout(timer);
+          tampilBanner('Koneksi ke database terputus. Perubahan terakhir mungkin belum tersimpan, cek kembali sebelum mengulang.', true);
+          setTimeout(sembunyiBanner, 8000);
+          throw e;
+        });
+    }
+    const k = kunciGet(u);
+    const p = _primed.get(k);
+    if(p && Date.now() - p.t < PRIME_TTL) return Promise.resolve(responJson(p.teks));
+    if(_berjalan.has(k)) return _berjalan.get(k).then(responJson);
+    const jalan = ambilGetDenganUlang(u, opts).finally(() => _berjalan.delete(k));
+    _berjalan.set(k, jalan);
+    return jalan.then(responJson);
+  };
+
+  // Pembaca Excel (~900 KB) hanya diunduh saat petugas benar-benar memilih berkas Excel/CSV.
+  let _xlsxJanji = null;
+  function pastikanXLSX(){
+    if(window.XLSX) return Promise.resolve();
+    if(_xlsxJanji) return _xlsxJanji;
+    _xlsxJanji = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = () => resolve();
+      s.onerror = () => { _xlsxJanji = null; reject(new Error('Gagal memuat pembaca Excel. Periksa internet.')); };
+      document.head.appendChild(s);
+    });
+    return _xlsxJanji;
+  }
+
+  // Satu panggilan awal menggantikan 6 panggilan terpisah saat login; hasilnya dipakai fungsi-fungsi muat data.
+  async function muatDataAwal(pin){
+    const u = `${API_URL}?pin=${encodeURIComponent(pin)}&action=getBootstrap`;
+    const res = await window.fetch(u);
+    const data = await res.json();
+    if(data && data.error) return { error: data.error };
+    if(!data || !Array.isArray(data.antrian)) return { tidakDidukung: true };   // Code.gs lama belum di-deploy
+    const set = (a, v) => _primed.set(a + '|', { t: Date.now(), teks: JSON.stringify(v) });
+    set('getAntrian', data.antrian); set('getStats', data.stats); set('getSettings', data.settings); set('getJadwalKontrol', data.jadwal);
+    return { ok: true };
+  }
+
   function showMsg(id, text, ok){
     const el = document.getElementById(id);
     el.textContent = text;
@@ -989,8 +1093,14 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
     const pin = document.getElementById('pinInput').value.trim();
     if(!pin){ return; }
     try{
-      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'login', pin }) });
-      const data = await res.json();
+      let data;
+      const awal = await muatDataAwal(pin);
+      if(awal.error){ data = { success:false, error: awal.error }; }
+      else if(awal.ok){ data = { success:true }; }
+      else {
+        const res = await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'login', pin }) });
+        data = await res.json();
+      }
       if(data.success){
         PIN = pin;
         sessionStorage.setItem('ucapan_pin', pin);
@@ -2377,6 +2487,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
 
       if(['xlsx','xls','csv'].includes(ext)){
         const data = await file.arrayBuffer();
+        await pastikanXLSX();
         const wb = XLSX.read(data, { type: 'array' });
         const firstSheet = wb.Sheets[wb.SheetNames[0]];
         const csvText = XLSX.utils.sheet_to_csv(firstSheet);
@@ -2640,6 +2751,7 @@ Syarat rawat inap BPJS | Membawa kartu BPJS, KTP, dan surat rujukan dari faskes 
         let body;
         try{
           if(['xlsx','xls','csv'].includes(ext)){
+            await pastikanXLSX();
             const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
             const teks = wb.SheetNames.map(n => `# Lembar: ${n}\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n\n');
             body = { action:'ekstrakKBAI', pin: PIN, mode:'text', textContent: teks };
